@@ -207,6 +207,7 @@ import type { ActionRecord, BodyPart, SetDetail, TrainingLocation, TrainingRecor
 import { BODY_PART_LABELS, LOCATION_LABELS } from '@/types/training'
 import { calculateActionVolume, updateActionCalculations } from '@/utils/calculator'
 import { getCurrentDate } from '@/utils/date'
+import { normalizeUsingTemplatePayload } from '@/utils/training-transfer'
 import { trainingPlanServiceLocal } from '@/services/training-plan.local'
 import { trainingServiceLocal } from '@/services/training.local'
 import { templateServiceLocal } from '@/services/template.local'
@@ -374,6 +375,8 @@ async function loadActionLibrary() {
       })
     })
   } catch (error) {
+    uni.removeStorageSync('using_template')
+    uni.showToast({ title: '模板数据已失效', icon: 'none' })
     console.error('加载模板动作失败:', error)
   }
 
@@ -612,8 +615,14 @@ onShow(async () => {
   const raw = uni.getStorageSync('using_template')
   if (!raw) return
   try {
-    const data = JSON.parse(raw)
-    formData.actions = (data.actions || []).map((name: string) => actionFromName(name))
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
+    const data = normalizeUsingTemplatePayload(parsed)
+    if (!data.actions.length) {
+      uni.showToast({ title: '模板数据已失效', icon: 'none' })
+      uni.removeStorageSync('using_template')
+      return
+    }
+    formData.actions = data.actions.map((name) => actionFromName(name))
     markDirty()
     uni.removeStorageSync('using_template')
     uni.showToast({ title: '已加载模板并沿用历史重量', icon: 'success' })

@@ -248,6 +248,28 @@ Reason:
 - imported plans should not show a session as completed when tapping it cannot open the underlying training record
 - imported plans should not keep broken template links that look selectable but cannot resolve to a real template
 
+### 10. Template-to-workout transfer hardening
+
+Updated:
+
+```text
+src/utils/training-transfer.ts
+src/utils/training-transfer.test.ts
+src/pages/training-record/training-record.vue
+```
+
+Important changes:
+
+- added `normalizeUsingTemplatePayload(...)`
+- using-template temporary storage now accepts only valid action-name arrays
+- action names can be restored from either strings or `{ name }` objects
+- invalid template transfer data is rejected and the temporary cache is cleared
+
+Reason:
+
+- if `using_template` local storage is stale or corrupted, opening the training record page should not repeatedly fail
+- real users may bounce between template and workout pages; temporary transfer state should be self-healing
+
 ## Latest Verified Commands
 
 The last successful verification before this handoff:
@@ -272,7 +294,7 @@ D:\dist-upload-home-ai-v1
 
 Latest package sizes after the last full code round:
 
-- Main package: about 373.7 KB
+- Main package: about 374.6 KB
 - `exercise-assets`: about 180.4 KB
 
 Recheck sizes after every next change.
