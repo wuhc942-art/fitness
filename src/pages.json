@@ -1,0 +1,133 @@
+{
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "健身记录"
+      }
+    },
+    {
+      "path": "pages/training-record/training-record",
+      "style": {
+        "navigationBarTitleText": "今日训练"
+      }
+    },
+    {
+      "path": "pages/exercises/exercises",
+      "style": {
+        "navigationBarTitleText": "动作库"
+      }
+    },
+    {
+      "path": "pages/history-query/history-query",
+      "style": {
+        "navigationBarTitleText": "训练历史"
+      }
+    },
+    {
+      "path": "pages/body-data/body-data",
+      "style": {
+        "navigationBarTitleText": "身体数据"
+      }
+    },
+    {
+      "path": "pages/templates/templates",
+      "style": {
+        "navigationBarTitleText": "训练模板"
+      }
+    },
+    {
+      "path": "pages/charts/charts",
+      "style": {
+        "navigationBarTitleText": "数据图表"
+      }
+    },
+    {
+      "path": "pages/settings/settings",
+      "style": {
+        "navigationBarTitleText": "设置"
+      }
+    },
+    {
+      "path": "pages/reminders/reminders",
+      "style": {
+        "navigationBarTitleText": "提醒中心"
+      }
+    },
+    {
+      "path": "pages/ai-plan/ai-plan",
+      "style": {
+        "navigationBarTitleText": "AI训练计划"
+      }
+    },
+    {
+      "path": "pages/diet/diet",
+      "style": {
+        "navigationBarTitleText": "AI饮食建议"
+      }
+    },
+    {
+      "path": "pages/profile/profile",
+      "style": {
+        "navigationBarTitleText": "我的"
+      }
+    },
+    {
+      "path": "pages/plans/plans",
+      "style": {
+        "navigationBarTitleText": "训练计划"
+      }
+    },
+    {
+      "path": "pages/plans/create-plan",
+      "style": {
+        "navigationBarTitleText": "新建计划"
+      }
+    },
+    {
+      "path": "pages/plans/plan-detail",
+      "style": {
+        "navigationBarTitleText": "计划详情"
+      }
+    },
+    {
+      "path": "pages/plans/edit-plan",
+      "style": {
+        "navigationBarTitleText": "编辑计划"
+      }
+    }
+  ],
+  "subPackages": [
+    {
+      "root": "exercise-assets",
+      "pages": [
+        {
+          "path": "index/index",
+          "style": {
+            "navigationBarTitleText": "动作资源"
+          }
+        }
+      ]
+    }
+  ],
+  "preloadRule": {
+    "pages/exercises/exercises": {
+      "network": "all",
+      "packages": ["exercise-assets"]
+    }
+  },
+  "globalStyle": {
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "健身记录",
+    "navigationBarBackgroundColor": "#101820",
+    "backgroundColor": "#f3f6f5",
+    "pageOrientation": "portrait"
+  },
+  "viewport": {
+    "initialScale": 1,
+    "maximumScale": 1,
+    "minimumScale": 1,
+    "userScalable": false,
+    "width": 750
+  }
+}

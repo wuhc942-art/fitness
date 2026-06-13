@@ -1,0 +1,43 @@
+/**
+ * 全局样式变量
+ */
+
+/* 主题色 */
+$primary-color: #101820;
+$primary-gradient: linear-gradient(135deg, #101820 0%, #1b2a34 100%);
+
+$success-color: #22c55e;
+$success-gradient: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+
+$warning-color: #d97706;
+$warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+
+$info-color: #2563eb;
+$info-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+
+/* 中性色 */
+$text-primary: #101820;
+$text-regular: #334155;
+$text-secondary: #64748b;
+$text-placeholder: #94a3b8;
+
+$border-color: #e2e8f0;
+$background-color: #f3f6f5;
+
+/* 间距 */
+$margin-xs: 4px;
+$margin-sm: 8px;
+$margin-md: 16px;
+$margin-lg: 24px;
+$margin-xl: 32px;
+
+/* 圆角 */
+$radius-sm: 6px;
+$radius-md: 10px;
+$radius-lg: 14px;
+$radius-xl: 22px;
+
+/* 阴影 */
+$shadow-sm: 0 2px 8px rgba(16, 24, 32, 0.04);
+$shadow-md: 0 8px 24px rgba(16, 24, 32, 0.06);
+$shadow-lg: 0 16px 42px rgba(16, 24, 32, 0.10);

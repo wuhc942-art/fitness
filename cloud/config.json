@@ -1,0 +1,199 @@
+{
+  "cloudBase": {
+    "env": "your-env-id"
+  },
+  "database": {
+    "collections": {
+      "training_records": {
+        "description": "训练记录",
+        "indexes": [
+          {
+            "name": "openid_date",
+            "keys": [
+              {
+                "field": "_openid",
+                "direction": "asc"
+              },
+              {
+                "field": "date",
+                "direction": "desc"
+              }
+            ]
+          },
+          {
+            "name": "openid_bodyPart",
+            "keys": [
+              {
+                "field": "_openid",
+                "direction": "asc"
+              },
+              {
+                "field": "bodyPart",
+                "direction": "asc"
+              }
+            ]
+          },
+          {
+            "name": "openid_actions_name",
+            "keys": [
+              {
+                "field": "_openid",
+                "direction": "asc"
+              },
+              {
+                "field": "actions.name",
+                "direction": "asc"
+              }
+            ]
+          }
+        ],
+        "permissions": {
+          "read": "auth.openid == _openid",
+          "write": "auth.openid == _openid"
+        }
+      },
+      "body_data_records": {
+        "description": "身体数据记录",
+        "indexes": [
+          {
+            "name": "openid_date",
+            "keys": [
+              {
+                "field": "_openid",
+                "direction": "asc"
+              },
+              {
+                "field": "date",
+                "direction": "desc"
+              }
+            ]
+          }
+        ],
+        "permissions": {
+          "read": "auth.openid == _openid",
+          "write": "auth.openid == _openid"
+        }
+      },
+      "training_templates": {
+        "description": "训练模板",
+        "indexes": [
+          {
+            "name": "openid",
+            "keys": [
+              {
+                "field": "_openid",
+                "direction": "asc"
+              }
+            ]
+          }
+        ],
+        "permissions": {
+          "read": "auth.openid == _openid",
+          "write": "auth.openid == _openid"
+        }
+      },
+      "reminder_settings": {
+        "description": "提醒设置",
+        "indexes": [
+          {
+            "name": "openid",
+            "keys": [
+              {
+                "field": "_openid",
+                "direction": "asc"
+              }
+            ]
+          }
+        ],
+        "permissions": {
+          "read": "auth.openid == _openid",
+          "write": "auth.openid == _openid"
+        }
+      }
+    }
+  },
+  "functions": {
+    "getStatistics": {
+      "description": "获取首页统计数据",
+      "timeout": 5,
+      "memorySize": 256
+    },
+    "saveTrainingRecord": {
+      "description": "保存训练记录",
+      "timeout": 5,
+      "memorySize": 256
+    },
+    "updateTrainingRecord": {
+      "description": "更新训练记录",
+      "timeout": 5,
+      "memorySize": 256
+    },
+    "deleteTrainingRecord": {
+      "description": "删除训练记录",
+      "timeout": 5,
+      "memorySize": 256
+    },
+    "saveBodyDataRecord": {
+      "description": "保存身体数据",
+      "timeout": 5,
+      "memorySize": 256
+    },
+    "updateBodyDataRecord": {
+      "description": "更新身体数据",
+      "timeout": 5,
+      "memorySize": 256
+    },
+    "deleteBodyDataRecord": {
+      "description": "删除身体数据",
+      "timeout": 5,
+      "memorySize": 256
+    },
+    "getBodyDataRecords": {
+      "description": "获取身体数据记录",
+      "timeout": 5,
+      "memorySize": 256
+    },
+    "queryHistory": {
+      "description": "查询历史记录",
+      "timeout": 5,
+      "memorySize": 256
+    },
+    "getTrainingTemplate": {
+      "description": "获取训练模板",
+      "timeout": 5,
+      "memorySize": 256
+    },
+    "saveTemplate": {
+      "description": "保存训练模板",
+      "timeout": 5,
+      "memorySize": 256
+    },
+    "deleteTemplate": {
+      "description": "删除训练模板",
+      "timeout": 5,
+      "memorySize": 256
+    },
+    "getReminderSettings": {
+      "description": "获取提醒设置",
+      "timeout": 5,
+      "memorySize": 256
+    },
+    "saveReminderSettings": {
+      "description": "保存提醒设置",
+      "timeout": 5,
+      "memorySize": 256
+    },
+    "sendNotification": {
+      "description": "发送提醒推送",
+      "timeout": 5,
+      "memorySize": 256,
+      "triggers": [
+        {
+          "name": "dailyReminder",
+          "type": "timer",
+          "config": "0 0 19 * * * *"
+        }
+      ]
+    }
+  }
+}
