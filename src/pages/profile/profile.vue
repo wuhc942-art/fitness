@@ -41,14 +41,28 @@
       </view>
     </view>
 
-    <view class="panel">
+    <view class="panel ability-panel">
       <view class="panel-head">
-        <text class="panel-title">会员能力</text>
-        <text class="panel-note">{{ profile.memberStatus === 'vip' ? '已开启' : '规划中' }}</text>
+        <text class="panel-title">成长能力</text>
+        <text class="panel-note">{{ profile.memberStatus === 'vip' ? '能力已开启' : '逐步开放' }}</text>
+      </view>
+      <view class="ability-summary">
+        <view>
+          <text class="ability-kicker">能力点</text>
+          <text class="ability-score">{{ growth.points }}</text>
+        </view>
+        <view class="ability-next">
+          <text class="ability-next-label">下一步</text>
+          <text class="ability-next-text">{{ nextAbilityText }}</text>
+        </view>
       </view>
       <view class="feature-list">
-        <view v-for="item in features" :key="item" class="feature-row">
-          <text>{{ item }}</text>
+        <view v-for="item in abilityFeatures" :key="item.title" class="feature-row" :class="item.tone">
+          <view class="feature-copy">
+            <text class="feature-title">{{ item.title }}</text>
+            <text class="feature-desc">{{ item.desc }}</text>
+          </view>
+          <text class="feature-status">{{ item.status }}</text>
         </view>
       </view>
     </view>
@@ -116,9 +130,52 @@ const growth = reactive<UserGrowth>({
 })
 const showEdit = ref(false)
 const isSaving = ref(false)
-const features = ['基础训练记录', 'AI训练计划', 'AI训练分析', 'AI饮食建议', '数据导出', '云端同步（待接入）']
 
 const avatarText = computed(() => (profile.nickname || 'F').slice(0, 1).toUpperCase())
+const nextAbilityText = computed(() => {
+  if (growth.stats.trainingCount < 3) return '累计 3 次训练，生成更可靠的分析'
+  if (growth.stats.planCount === 0) return '创建训练计划，让首页任务更准确'
+  if (growth.stats.bodyRecordCount === 0) return '记录一次身体数据，完善成长画像'
+  return '保持记录节奏，继续提升等级'
+})
+const abilityFeatures = computed(() => [
+  {
+    title: '基础训练记录',
+    desc: `已累计 ${growth.stats.trainingCount} 次训练`,
+    status: '已解锁',
+    tone: 'ready'
+  },
+  {
+    title: 'AI训练计划',
+    desc: growth.stats.planCount > 0 ? `已创建 ${growth.stats.planCount} 个计划` : '可根据目标生成训练安排',
+    status: profile.memberStatus === 'vip' ? '已开启' : '可使用',
+    tone: 'active'
+  },
+  {
+    title: 'AI训练分析',
+    desc: growth.stats.trainingCount > 0 ? '结合训练记录查看进步趋势' : '完成训练后开始分析',
+    status: growth.stats.trainingCount > 0 ? '可分析' : '需记录',
+    tone: growth.stats.trainingCount > 0 ? 'active' : 'locked'
+  },
+  {
+    title: 'AI饮食建议',
+    desc: '结合饮食记录和训练目标给出建议',
+    status: '规划中',
+    tone: 'planned'
+  },
+  {
+    title: '数据导出',
+    desc: '整理本地训练、身体和计划数据',
+    status: '可使用',
+    tone: 'ready'
+  },
+  {
+    title: '云端同步',
+    desc: '微信登录和云端账号接入后开放',
+    status: '待接入',
+    tone: 'locked'
+  }
+])
 
 const load = async () => {
   Object.assign(profile, await userServiceLocal.getProfile())
@@ -175,8 +232,27 @@ onShow(load)
 .panel { padding: 28rpx; }
 .panel-head { margin-bottom: 18rpx; }
 .panel-title { color: #101820; font-size: 30rpx; font-weight: 900; }
+.ability-panel { overflow: hidden; }
+.ability-summary { display: flex; align-items: stretch; gap: 16rpx; margin-bottom: 18rpx; padding: 20rpx; border-radius: 18rpx; background: linear-gradient(135deg, #e8f1ff 0%, #e9fbf6 100%); border: 1rpx solid #dbe8f1; }
+.ability-summary > view:first-child { flex-shrink: 0; width: 132rpx; }
+.ability-kicker, .ability-next-label, .feature-desc { display: block; color: #5d6d82; font-size: 22rpx; line-height: 1.35; font-weight: 800; }
+.ability-score { display: block; margin-top: 4rpx; color: #18212f; font-size: 42rpx; line-height: 1.05; font-weight: 950; }
+.ability-next { flex: 1; min-width: 0; padding-left: 16rpx; border-left: 1rpx solid rgba(104, 119, 140, .22); }
+.ability-next-text { display: block; margin-top: 6rpx; color: #18212f; font-size: 25rpx; line-height: 1.45; font-weight: 900; }
 .feature-list { display: flex; flex-direction: column; gap: 12rpx; }
-.feature-row { padding: 18rpx 20rpx; border-radius: 12rpx; background: #f8fafc; color: #2d3748; font-size: 25rpx; }
+.feature-row { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; padding: 18rpx 18rpx 18rpx 20rpx; border-radius: 16rpx; background: #f8fafc; border: 1rpx solid #edf2f7; }
+.feature-row.active { background: #f3f8ff; border-color: #d9e8ff; }
+.feature-row.ready { background: #f3fbf8; border-color: #d8f3eb; }
+.feature-row.planned { background: #fffaf0; border-color: #f6e6c5; }
+.feature-row.locked { background: #f7f9fb; border-color: #e4ebf1; }
+.feature-copy { min-width: 0; flex: 1; }
+.feature-title { display: block; color: #18212f; font-size: 26rpx; line-height: 1.35; font-weight: 900; }
+.feature-desc { margin-top: 4rpx; color: #5d6d82; font-weight: 700; }
+.feature-status { flex-shrink: 0; min-width: 88rpx; padding: 8rpx 12rpx; border-radius: 999rpx; background: #eef4f8; color: #344154; font-size: 21rpx; line-height: 1.2; font-weight: 900; text-align: center; }
+.feature-row.active .feature-status { background: #e8f1ff; color: #2f6fd6; }
+.feature-row.ready .feature-status { background: #e9fbf6; color: #16856c; }
+.feature-row.planned .feature-status { background: #fff3d8; color: #805421; }
+.feature-row.locked .feature-status { background: #e9eef3; color: #68778c; }
 .modal-mask { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 20; display: flex; align-items: flex-end; background: rgba(16,24,32,.52); }
 .modal { width: 100%; border-radius: 24rpx 24rpx 0 0; background: #fff; overflow: hidden; }
 .modal-head, .modal-actions { display: flex; align-items: center; justify-content: space-between; padding: 28rpx; border-bottom: 1rpx solid #edf2f7; }

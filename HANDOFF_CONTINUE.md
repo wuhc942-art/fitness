@@ -102,6 +102,41 @@ Package sizes after copy:
 - `exercise-assets`: about 0.176 MB
 - Test files in upload folder: 0
 
+### 0b. Profile growth ability panel
+
+Updated the profile page member capability section into a `成长能力` panel.
+
+Files changed:
+
+```text
+src/pages/profile/profile.vue
+```
+
+Important behavior:
+
+- replaces the plain `会员能力` list with ability points, next-step guidance, and status-labeled ability rows
+- keeps the design restrained and product-oriented instead of turning the profile page into a full game skin
+- uses existing local profile/growth data only; no cloud sync claim was added
+
+Verification for this round:
+
+```text
+npm run type-check passed
+npm run build:mp-weixin passed
+```
+
+Copied output:
+
+```text
+D:\dist-upload-home-ai-v1
+```
+
+Package sizes after copy:
+
+- Main package: about 0.371 MB
+- `exercise-assets`: about 0.176 MB
+- Test files in upload folder: 0
+
 ### 1. Product context and design workflow files
 
 Added:
