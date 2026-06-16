@@ -1,6 +1,6 @@
 # HANDOFF CONTINUE - FitAI WeChat Mini Program
 
-Last updated: 2026-06-12
+Last updated: 2026-06-16
 
 ## Current Working Goal
 
@@ -61,6 +61,46 @@ Important direction:
 - small, verified improvements over risky rewrites
 
 ## Recent Completed Work Since Original HANDOFF
+
+### 0. Home growth task card / light RPG integration
+
+Replaced the old home `AI今日建议` surface with a restrained growth profile and daily quest card inspired by the referenced RPG fitness preview.
+
+Files changed:
+
+```text
+src/pages/index/index.vue
+src/services/rpg-progress.local.ts
+src/services/rpg-progress.local.test.ts
+```
+
+Important behavior:
+
+- home now shows `成长档案`, level, EXP, next-level progress, a daily quest, expected reward, and four attributes
+- growth data is derived from local training records plus today's plan
+- the old AI advice section has been replaced and no longer fetches `homeInsightsServiceLocal`
+- no media assets were added, keeping package size low
+
+Verification for this round:
+
+```text
+rpg progress assertions passed
+training transfer assertions passed
+npm run type-check passed
+npm run build:mp-weixin passed
+```
+
+Copied output:
+
+```text
+D:\dist-upload-home-ai-v1
+```
+
+Package sizes after copy:
+
+- Main package: about 0.367 MB
+- `exercise-assets`: about 0.176 MB
+- Test files in upload folder: 0
 
 ### 1. Product context and design workflow files
 

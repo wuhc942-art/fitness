@@ -24,25 +24,45 @@
       </view>
     </view>
 
-    <view class="section advice-section">
+    <view class="section growth-section">
       <view class="card-heading">
         <view>
-          <text class="card-title">AI今日建议</text>
-          <text class="card-subtitle">基于训练记录和计划自动生成</text>
+          <text class="card-title">成长档案</text>
+          <text class="card-subtitle">把训练记录转成等级、属性和今日任务</text>
         </view>
         <button class="mini-btn" :disabled="isLoading" @click="loadStatistics">{{ isLoading ? '刷新中' : '刷新' }}</button>
       </view>
-      <view v-if="isLoading" class="home-loading">正在整理今日训练状态...</view>
-      <view v-if="insights.length === 0" class="empty">完成一次训练后，这里会开始给你训练建议。</view>
-      <view v-else class="advice-list">
-        <view v-for="item in insights" :key="item.title" class="advice-card" :class="item.tone">
-          <view class="advice-copy">
-            <text class="advice-title">{{ item.title }}</text>
-            <text class="advice-content">{{ item.content }}</text>
+      <view v-if="isLoading" class="home-loading">正在整理今日成长任务...</view>
+      <view class="growth-card">
+        <view class="growth-top">
+          <view>
+            <text class="growth-label">{{ growthProfile.title }}</text>
+            <text class="growth-level">Lv. {{ growthProfile.level }}</text>
           </view>
-          <button v-if="item.actionText && item.actionUrl" class="advice-action" @click="goQuick(item.actionUrl)">
-            {{ item.actionText }}
-          </button>
+          <view class="growth-exp">
+            <text>{{ growthProfile.experience }}</text>
+            <text>EXP</text>
+          </view>
+        </view>
+        <view class="growth-bar">
+          <view class="growth-fill" :style="{ width: `${growthProfile.progressPercent}%` }"></view>
+        </view>
+        <text class="growth-next">距离下一级还差 {{ Math.max(growthProfile.nextLevelExperience - growthProfile.experience, 0) }} 经验</text>
+        <view class="quest-card">
+          <view class="quest-mark">
+            <text>Q</text>
+          </view>
+          <view class="quest-copy">
+            <text class="quest-title">{{ growthProfile.questTitle }}</text>
+            <text class="quest-text">{{ growthProfile.questSubtitle }}</text>
+            <text class="quest-reward">{{ growthProfile.rewardText }}</text>
+          </view>
+        </view>
+        <view class="attribute-grid">
+          <view v-for="attr in growthProfile.attributes" :key="attr.label" class="attribute-item">
+            <text class="attribute-value">{{ attr.value }}</text>
+            <text class="attribute-label">{{ attr.label }}</text>
+          </view>
         </view>
       </view>
     </view>
@@ -97,7 +117,7 @@ import { onShow } from '@dcloudio/uni-app'
 import type { HomeStatistics } from '@/types'
 import { statisticsServiceLocal } from '@/services/statistics.local'
 import { trainingPlanServiceLocal } from '@/services/training-plan.local'
-import { homeInsightsServiceLocal, type HomeInsight } from '@/services/home-insights.local'
+import { rpgProgressServiceLocal, type GrowthProfile } from '@/services/rpg-progress.local'
 
 const statistics = ref<HomeStatistics>({
   continuousDays: 0,
@@ -108,9 +128,24 @@ const statistics = ref<HomeStatistics>({
 })
 const todayPlanInfo = ref<any>(null)
 const nextPlanInfo = ref<any>(null)
-const insights = ref<HomeInsight[]>([])
 const isLoading = ref(false)
 const isNavigating = ref(false)
+const growthProfile = ref<GrowthProfile>({
+  level: 1,
+  experience: 0,
+  nextLevelExperience: 250,
+  progressPercent: 0,
+  title: '待激活训练者',
+  questTitle: '今日任务：自由训练',
+  questSubtitle: '先建立一次训练基线，后续建议会更准确。',
+  rewardText: '完成后预计获得 经验 +60',
+  attributes: [
+    { label: '力量', value: 8 },
+    { label: '耐力', value: 8 },
+    { label: '稳定', value: 8 },
+    { label: '恢复', value: 72 }
+  ]
+})
 
 const quickActions = [
   { icon: '记', tone: 'primary', label: '记录', url: '/pages/training-record/training-record' },
@@ -184,7 +219,6 @@ const loadStatistics = async () => {
   try {
     isLoading.value = true
     statistics.value = await statisticsServiceLocal.getHomeStatistics()
-    insights.value = await homeInsightsServiceLocal.getTodayInsights()
   } catch (error) {
     console.error('加载首页数据失败:', error)
     uni.showToast({ title: '首页数据加载失败', icon: 'none' })
@@ -192,6 +226,7 @@ const loadStatistics = async () => {
     isLoading.value = false
   }
   await loadTodayPlan()
+  growthProfile.value = await rpgProgressServiceLocal.getHomeGrowthProfile(todayPlanInfo.value)
 }
 
 const loadTodayPlan = async () => {
@@ -409,71 +444,177 @@ onShow(() => {
   text-align: center;
 }
 
-.advice-list {
-  display: flex;
-  flex-direction: column;
-  gap: 14rpx;
+.growth-section {
+  overflow: hidden;
 }
 
-.advice-card {
+.growth-card {
+  padding: 26rpx;
+  border-radius: 24rpx;
+  background: linear-gradient(145deg, #f8fbff 0%, #eef9f5 100%);
+  border: 1rpx solid #dbe8f1;
+}
+
+.growth-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18rpx;
+}
+
+.growth-label,
+.growth-next,
+.quest-text,
+.quest-reward,
+.attribute-label {
+  display: block;
+}
+
+.growth-label {
+  color: #4f637a;
+  font-size: 24rpx;
+  line-height: 1.35;
+  font-weight: 800;
+}
+
+.growth-level {
+  display: block;
+  margin-top: 6rpx;
+  color: #101820;
+  font-size: 48rpx;
+  font-weight: 950;
+  line-height: 1.05;
+}
+
+.growth-exp {
+  flex-shrink: 0;
+  min-width: 118rpx;
+  padding: 12rpx 16rpx;
+  border-radius: 18rpx;
+  background: #101820;
+  color: #fff;
+  text-align: center;
+}
+
+.growth-exp text:first-child {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 950;
+  line-height: 1.1;
+}
+
+.growth-exp text:last-child {
+  display: block;
+  margin-top: 4rpx;
+  color: rgba(255, 255, 255, .72);
+  font-size: 18rpx;
+  font-weight: 900;
+}
+
+.growth-bar {
+  height: 14rpx;
+  margin-top: 20rpx;
+  border-radius: 999rpx;
+  overflow: hidden;
+  background: #dce7ef;
+}
+
+.growth-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #4f8cff 0%, #53d7b6 100%);
+}
+
+.growth-next {
+  margin-top: 10rpx;
+  color: #5d6d82;
+  font-size: 22rpx;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.quest-card {
+  display: flex;
+  gap: 18rpx;
+  margin-top: 22rpx;
+  padding: 20rpx;
+  border-radius: 20rpx;
+  background: #fff;
+  border: 1rpx solid #e1ebf2;
+}
+
+.quest-mark {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16rpx;
-  padding: 22rpx;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 58rpx;
+  height: 58rpx;
   border-radius: 18rpx;
-  background: #f6f8f8;
-  border: 1rpx solid #e2e8f0;
+  background: #4f8cff;
+  color: #fff;
+  font-size: 26rpx;
+  font-weight: 950;
 }
 
-.advice-card.focus,
-.advice-card.good {
-  background: #f0fdf4;
-  border-color: rgba(34, 197, 94, .34);
-}
-
-.advice-card.warn {
-  background: #fffbeb;
-  border-color: rgba(217, 119, 6, .28);
-}
-
-.advice-card.info {
-  background: #eff6ff;
-  border-color: rgba(37, 99, 235, .24);
-}
-
-.advice-copy {
+.quest-copy {
   min-width: 0;
   flex: 1;
 }
 
-.advice-title {
+.quest-title {
   display: block;
   color: #101820;
-  font-size: 27rpx;
-  font-weight: 900;
-  line-height: 1.3;
+  font-size: 28rpx;
+  line-height: 1.32;
+  font-weight: 950;
 }
 
-.advice-content {
-  display: block;
+.quest-text {
   margin-top: 8rpx;
-  color: #334155;
+  color: #344154;
   font-size: 24rpx;
   line-height: 1.5;
+  font-weight: 700;
 }
 
-.advice-action {
-  flex-shrink: 0;
-  margin: 0;
-  width: 120rpx;
-  height: 62rpx;
-  line-height: 62rpx;
-  border-radius: 999rpx;
-  background: #101820;
-  color: #fff;
+.quest-reward {
+  margin-top: 10rpx;
+  color: #16856c;
   font-size: 23rpx;
+  line-height: 1.35;
   font-weight: 900;
+}
+
+.attribute-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10rpx;
+  margin-top: 18rpx;
+}
+
+.attribute-item {
+  padding: 16rpx 8rpx;
+  border-radius: 16rpx;
+  background: rgba(255, 255, 255, .72);
+  border: 1rpx solid rgba(219, 232, 241, .88);
+  text-align: center;
+}
+
+.attribute-value {
+  display: block;
+  color: #101820;
+  font-size: 30rpx;
+  line-height: 1.1;
+  font-weight: 950;
+}
+
+.attribute-label {
+  margin-top: 6rpx;
+  color: #5d6d82;
+  font-size: 21rpx;
+  line-height: 1.2;
+  font-weight: 800;
 }
 
 .week-grid {

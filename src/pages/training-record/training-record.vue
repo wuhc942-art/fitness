@@ -375,8 +375,6 @@ async function loadActionLibrary() {
       })
     })
   } catch (error) {
-    uni.removeStorageSync('using_template')
-    uni.showToast({ title: '模板数据已失效', icon: 'none' })
     console.error('加载模板动作失败:', error)
   }
 
@@ -627,6 +625,8 @@ onShow(async () => {
     uni.removeStorageSync('using_template')
     uni.showToast({ title: '已加载模板并沿用历史重量', icon: 'success' })
   } catch (error) {
+    uni.removeStorageSync('using_template')
+    uni.showToast({ title: '模板数据已失效', icon: 'none' })
     console.error('解析模板失败:', error)
   }
 })
