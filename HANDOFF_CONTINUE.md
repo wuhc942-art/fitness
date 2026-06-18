@@ -250,6 +250,45 @@ Upload folder test-file check:
 
 - Test files in upload folder: 0
 
+### 0f. Diet module changed to training nutrition assistant
+
+Reworked the diet feature after user feedback that plain daily food logging felt unnecessary and low-value.
+
+Files changed:
+
+```text
+src/pages/diet/diet.vue
+src/services/diet.local.ts
+src/services/diet.local.test.ts
+```
+
+Important behavior:
+
+- diet page is now framed as `训练饮食建议`, not a single-day food diary
+- analysis is goal-aware using the saved body profile goal (`增肌`, `减脂`, `塑形`, `力量`)
+- service returns macro targets, progress rows, summary title/text, highlights, and actionable suggestions
+- page supports quick food chips per meal and `复用上一天`
+- recent diet records are shown for reference and quick loading
+- visible copy no longer claims real AI; it presents local rule-based nutrition guidance more honestly
+
+Verification for this round:
+
+```text
+diet analysis assertions passed
+npm run type-check passed
+npm run build:mp-weixin passed
+```
+
+Copied output:
+
+```text
+D:\dist-upload-home-ai-v1
+```
+
+Upload folder test-file check:
+
+- Test files in upload folder: 0
+
 ### 1. Product context and design workflow files
 
 Added:
