@@ -1,10 +1,10 @@
 import { EXERCISEDB_SNAPSHOT } from './exercisedb-snapshot.local'
 
 const BASE_URL = 'https://oss.exercisedb.dev/api/v1'
-const CACHE_KEY = 'exercisedb_exercises_cache_v2'
+const CACHE_KEY = 'exercisedb_exercises_cache_v3'
 const CACHE_TTL = 24 * 60 * 60 * 1000
-const PAGE_SIZE = 25
-const MAX_PAGES = 4
+const PAGE_SIZE = 40
+const MAX_PAGES = 8
 
 export interface ExerciseDbItem {
   exerciseId: string

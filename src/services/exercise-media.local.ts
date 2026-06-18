@@ -11,3 +11,7 @@ export function resolveExerciseGif(exerciseId: string, remoteUrl = '') {
 export function hasLocalExerciseGif(exerciseId: string) {
   return Boolean(LOCAL_GIF_MAP[exerciseId])
 }
+
+export function hasExerciseGif(exerciseId: string, remoteUrl = '') {
+  return Boolean(resolveExerciseGif(exerciseId, remoteUrl))
+}

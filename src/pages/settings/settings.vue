@@ -64,7 +64,7 @@
       <view class="action-row" :class="{ busy: isExporting }" @click="exportLocalData">
         <view class="setting-copy">
           <text class="setting-title">{{ isExporting ? '正在导出本地数据' : '导出本地数据' }}</text>
-          <text class="setting-desc">生成 JSON 文件，方便备份或后续迁移到云端</text>
+          <text class="setting-desc">生成备份文件，换机或清理缓存前可用于恢复</text>
         </view>
         <text class="arrow">›</text>
       </view>
@@ -79,14 +79,6 @@
         <text class="setting-title">{{ isClearing ? '正在清空本地数据' : '清空本地数据' }}</text>
         <text class="arrow">›</text>
       </view>
-    </view>
-
-    <view class="panel">
-      <view class="panel-head">
-        <text class="panel-title">包体状态</text>
-        <text class="panel-note">上传安全</text>
-      </view>
-      <text class="about-text">当前功能主要是代码和本地数据，不再把大 GIF 放进主包。后续新增图片资源会继续放到子包或走网络资源，避免超过微信主包 2MB 限制。</text>
     </view>
 
     <view class="panel">

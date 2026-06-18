@@ -174,6 +174,44 @@ Package sizes after copy:
 - `exercise-assets`: about 0.176 MB
 - Test files in upload folder: 0
 
+### 0d. Release-facing settings copy and broader ExerciseDB GIF display
+
+Adjusted settings and ExerciseDB behavior after user clarified that package/build status should not appear inside the mini program UI, and that ExerciseDB should show more GIF demonstrations.
+
+Files changed:
+
+```text
+src/pages/settings/settings.vue
+src/pages/exercises/exercises.vue
+src/services/exercise-media.local.ts
+src/services/exercisedb.local.ts
+```
+
+Important behavior:
+
+- removed the user-facing `包体状态` panel from settings
+- changed backup export copy to focus on backup/restore instead of cloud migration or build concerns
+- ExerciseDB now treats local packaged GIFs and remote `gifUrl` values as displayable GIFs
+- ExerciseDB default filtering now prioritizes all items with available GIFs, instead of only the three locally bundled GIFs
+- ExerciseDB cache key was bumped and pagination increased to fetch more remote exercises
+
+Verification for this round:
+
+```text
+npm run type-check passed
+npm run build:mp-weixin passed
+```
+
+Copied output:
+
+```text
+D:\dist-upload-home-ai-v1
+```
+
+Upload folder test-file check:
+
+- Test files in upload folder: 0
+
 ### 1. Product context and design workflow files
 
 Added:

@@ -190,7 +190,7 @@ import {
 } from '@/services/exercise-library.local'
 import { exerciseDbService, type ExerciseDbItem } from '@/services/exercisedb.local'
 import { translateExerciseName } from '@/utils/exercise-name-translate'
-import { hasLocalExerciseGif, resolveExerciseGif } from '@/services/exercise-media.local'
+import { hasExerciseGif, resolveExerciseGif } from '@/services/exercise-media.local'
 import { translateExerciseStep, translateExerciseTags } from '@/utils/exercise-content-translate'
 
 type SourceMode = 'local' | 'online'
@@ -223,8 +223,8 @@ const onlineStatusText = computed(() => {
   if (onlineLoading.value) return '正在加载 ExerciseDB 动作库，首次打开会多花几秒...'
   if (onlineError.value) return onlineError.value
   if (!onlineExercises.value.length) return '点击刷新或切换到 ExerciseDB 后加载在线动作，避免免费接口访问过频。'
-  if (!showAllOnline.value) return `当前只展示 ${optimizedOnlineCount.value} 个有演示、已中文优化的动作。搜不到时再查看更多文字动作。`
-  return `正在显示更多文字动作：部分动作没有演示，名称仅供搜索参考。`
+  if (!showAllOnline.value) return `当前优先展示 ${optimizedOnlineCount.value} 个带 GIF 演示的 ExerciseDB 动作。搜不到时再查看更多文字动作。`
+  return `正在显示更多文字动作：部分动作没有 GIF 演示，名称仅供搜索参考。`
 })
 
 const filteredLocalExercises = computed(() => {
@@ -249,7 +249,7 @@ const filteredOnlineExercises = computed(() => {
   const key = keyword.value.trim().toLowerCase()
   const list = Array.isArray(onlineExercises.value) ? onlineExercises.value : []
   return list.filter((item) => {
-    if (!showAllOnline.value && !hasLocalExerciseGif(item.exerciseId)) return false
+    if (!showAllOnline.value && !hasExerciseGif(item.exerciseId, item.gifUrl)) return false
     if (bodyPartFilter.value !== 'all' && mapOnlineBodyPart(item.bodyParts) !== bodyPartFilter.value) return false
     if (equipmentFilter.value !== 'all' && mapOnlineEquipment(item.equipments) !== equipmentFilter.value) return false
     if (!key) return true
@@ -262,11 +262,11 @@ const filteredOnlineExercises = computed(() => {
       ...item.secondaryMuscles
     ].join(' ').toLowerCase()
     return haystack.includes(key)
-  }).sort((a, b) => Number(hasLocalExerciseGif(b.exerciseId)) - Number(hasLocalExerciseGif(a.exerciseId)))
+  }).sort((a, b) => Number(hasExerciseGif(b.exerciseId, b.gifUrl)) - Number(hasExerciseGif(a.exerciseId, a.gifUrl)))
 })
 
 const optimizedOnlineCount = computed(() => {
-  return onlineExercises.value.filter((item) => hasLocalExerciseGif(item.exerciseId)).length
+  return onlineExercises.value.filter((item) => hasExerciseGif(item.exerciseId, item.gifUrl)).length
 })
 
 const visibleOnlineExercises = computed(() => filteredOnlineExercises.value.slice(0, onlineLimit.value))
