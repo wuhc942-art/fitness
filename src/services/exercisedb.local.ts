@@ -103,9 +103,6 @@ export const exerciseDbService = {
     if (!forceRefresh && cache && Date.now() - cache.savedAt < CACHE_TTL) {
       return cache.items
     }
-    if (!forceRefresh && EXERCISEDB_SNAPSHOT.length) {
-      return EXERCISEDB_SNAPSHOT
-    }
 
     const items: ExerciseDbItem[] = []
     const seen = new Set<string>()

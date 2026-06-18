@@ -212,6 +212,44 @@ Upload folder test-file check:
 
 - Test files in upload folder: 0
 
+### 0e. ExerciseDB first-load remote fix
+
+Fixed the root cause of ExerciseDB still showing only three GIF exercises after the broader GIF display change.
+
+Files changed:
+
+```text
+src/services/exercisedb.local.ts
+```
+
+Root cause:
+
+- `getExercises(false)` returned `EXERCISEDB_SNAPSHOT` before attempting the remote ExerciseDB request
+- the bundled snapshot currently contains only three exercises, so the ExerciseDB tab could stay limited to three GIF items unless the user explicitly refreshed
+
+Important behavior:
+
+- fresh uncached ExerciseDB loads now request the remote API first
+- the three-item bundled snapshot is only used as a fallback if remote loading fails and no valid cache exists
+
+Verification for this round:
+
+```text
+exercisedb first load assertion passed
+npm run type-check passed
+npm run build:mp-weixin passed
+```
+
+Copied output:
+
+```text
+D:\dist-upload-home-ai-v1
+```
+
+Upload folder test-file check:
+
+- Test files in upload folder: 0
+
 ### 1. Product context and design workflow files
 
 Added:
