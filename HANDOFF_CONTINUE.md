@@ -1,6 +1,6 @@
 # HANDOFF CONTINUE - FitAI WeChat Mini Program
 
-Last updated: 2026-06-16
+Last updated: 2026-06-18
 
 ## Current Working Goal
 
@@ -11,7 +11,7 @@ Continue improving the FitAI WeChat mini program from a real fitness user's pers
 - keep WeChat upload package size safe
 - after every meaningful round, run `npm run build:mp-weixin`
 - after building, overwrite `D:\dist-upload-home-ai-v1`
-- report main package and `exercise-assets` package sizes
+- measure package sizes internally when needed, but do not surface package-size/status details to the user unless asked
 
 The goal is still active. Do not mark the overall product complete.
 
@@ -289,6 +289,38 @@ Upload folder test-file check:
 
 - Test files in upload folder: 0
 
+### 0g. Diet page UI polish with existing UI skill
+
+Polished the diet page after the user asked to use the existing UI skill for a better production feel.
+
+Files changed:
+
+```text
+src/pages/diet/diet.vue
+```
+
+Important behavior:
+
+- kept the local nutrition analysis and diet data model unchanged
+- merged the summary, date picker, current goal, macro progress, and nutrition highlights into one top `nutrition-shell`
+- made meal input feel more like an operational assistant surface, with clearer dividers, stable touch targets, and calmer quick-food chips
+- changed suggestion rows into numbered action items for faster scanning
+- reduced generic stacked-card visual noise while preserving the app's existing restrained product UI language
+
+Verification for this round:
+
+```text
+diet analysis assertions passed
+npm run type-check passed
+npm run build:mp-weixin passed
+```
+
+Copied output:
+
+```text
+D:\dist-upload-home-ai-v1
+```
+
 ### 1. Product context and design workflow files
 
 Added:
@@ -524,7 +556,7 @@ Latest package sizes after the last full code round:
 - Main package: about 374.6 KB
 - `exercise-assets`: about 180.4 KB
 
-Recheck sizes after every next change.
+Recheck sizes internally after every next change, but do not report package-size details to the user unless asked.
 
 ## Current Build / Copy Commands
 
@@ -595,11 +627,11 @@ Recommended next internal-code/data consistency improvements:
    - `npm run type-check`
    - `npm run build:mp-weixin`
    - copy to `D:\dist-upload-home-ai-v1`
-   - report package sizes
+  - measure package sizes internally when needed
 
 ## Do Not Do Unless Asked
 
-- Do not continue frontend visual redesign; user said they redesigned UI already.
+- Do not do broad frontend visual redesign unless asked; targeted UI polish is allowed when the user explicitly requests it.
 - Do not add a backend/cloud sync claim unless it is actually implemented.
 - Do not add large media assets.
 - Do not do broad rewrites.

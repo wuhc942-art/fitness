@@ -1,45 +1,47 @@
 <template>
   <view class="diet-page">
-    <view class="hero">
-      <view class="hero-copy">
-        <text class="hero-kicker">训练饮食建议</text>
-        <text class="hero-title">{{ analysis.summaryTitle }}</text>
-        <text class="hero-subtitle">{{ analysis.summaryText }}</text>
-      </view>
-      <picker mode="date" :value="record.date" @change="onDateChange">
-        <view class="date-btn">{{ record.date.slice(5) }}</view>
-      </picker>
-    </view>
-
-    <view class="goal-card">
-      <view>
-        <text class="goal-label">当前目标</text>
-        <text class="goal-title">{{ goalName }}</text>
-      </view>
-      <button class="ghost-btn" :disabled="isLoading || !canReusePrevious" @click="reusePreviousRecord">复用上一天</button>
-    </view>
-
-    <view class="progress-panel">
-      <view v-for="item in analysis.progress" :key="item.key" class="progress-row">
-        <view class="progress-head">
-          <text class="progress-label">{{ item.label }}</text>
-          <text class="progress-value">{{ item.value }}{{ item.unit }} / {{ item.target }}{{ item.unit }}</text>
+    <view class="nutrition-shell">
+      <view class="hero">
+        <view class="hero-copy">
+          <text class="hero-kicker">训练饮食建议</text>
+          <text class="hero-title">{{ analysis.summaryTitle }}</text>
+          <text class="hero-subtitle">{{ analysis.summaryText }}</text>
         </view>
-        <view class="progress-track">
-          <view class="progress-fill" :class="item.state" :style="{ width: `${Math.min(item.percent, 100)}%` }"></view>
+        <picker mode="date" :value="record.date" @change="onDateChange">
+          <view class="date-btn">{{ record.date.slice(5) }}</view>
+        </picker>
+      </view>
+
+      <view class="goal-row">
+        <view class="goal-chip">
+          <text class="goal-label">当前目标</text>
+          <text class="goal-title">{{ goalName }}</text>
+        </view>
+        <button class="ghost-btn" :disabled="isLoading || !canReusePrevious" @click="reusePreviousRecord">复用上一天</button>
+      </view>
+
+      <view class="progress-panel">
+        <view v-for="item in analysis.progress" :key="item.key" class="progress-row">
+          <view class="progress-head">
+            <text class="progress-label">{{ item.label }}</text>
+            <text class="progress-value">{{ item.value }}{{ item.unit }} / {{ item.target }}{{ item.unit }}</text>
+          </view>
+          <view class="progress-track">
+            <view class="progress-fill" :class="item.state" :style="{ width: `${Math.min(item.percent, 100)}%` }"></view>
+          </view>
+        </view>
+      </view>
+
+      <view class="nutrition-grid">
+        <view v-for="item in analysis.highlights" :key="item.label" class="nutrition-card">
+          <text class="nutrition-label">{{ item.label }}</text>
+          <text class="nutrition-value">{{ item.value }}</text>
+          <text class="nutrition-desc">{{ item.desc }}</text>
         </view>
       </view>
     </view>
 
-    <view class="nutrition-grid">
-      <view v-for="item in analysis.highlights" :key="item.label" class="nutrition-card">
-        <text class="nutrition-label">{{ item.label }}</text>
-        <text class="nutrition-value">{{ item.value }}</text>
-        <text class="nutrition-desc">{{ item.desc }}</text>
-      </view>
-    </view>
-
-    <view class="panel">
+    <view class="panel meal-panel">
       <view class="panel-head">
         <view>
           <text class="panel-title">{{ record.date === todayDate ? '今日饮食' : '饮食记录' }}</text>
@@ -68,13 +70,14 @@
       </view>
     </view>
 
-    <view class="panel">
+    <view class="panel suggestion-panel">
       <view class="panel-head">
         <text class="panel-title">下一餐怎么调整</text>
         <text class="panel-note">{{ analysis.suggestions.length }} 条</text>
       </view>
       <view v-if="analysis.suggestions.length" class="suggestion-list">
-        <view v-for="item in analysis.suggestions" :key="item" class="suggestion-item">
+        <view v-for="(item, index) in analysis.suggestions" :key="item" class="suggestion-item">
+          <text class="suggestion-index">{{ index + 1 }}</text>
           <text>{{ item }}</text>
         </view>
       </view>
@@ -251,48 +254,393 @@ onShow(async () => {
 </script>
 
 <style lang="scss" scoped>
-.diet-page { min-height: 100vh; padding: 24rpx 24rpx 48rpx; background: #f4f8fb; box-sizing: border-box; }
-.hero { display: flex; align-items: flex-end; justify-content: space-between; gap: 24rpx; padding: 34rpx; border-radius: 28rpx; background: linear-gradient(145deg, #ffffff 0%, #edf7ff 100%); border: 1rpx solid #dfe8ef; box-shadow: 0 16rpx 42rpx rgba(71, 98, 128, .12); }
-.hero-copy { min-width: 0; flex: 1; }
-.hero-kicker, .hero-subtitle, .nutrition-label, .nutrition-desc, .panel-note, .goal-label { display: block; color: #68778c; font-size: 22rpx; line-height: 1.45; }
-.hero-title { display: block; margin: 10rpx 0; color: #18212f; font-size: 42rpx; font-weight: 950; line-height: 1.18; }
-.date-btn { flex-shrink: 0; min-width: 112rpx; height: 72rpx; padding: 0 20rpx; border-radius: 36rpx; background: #4f8cff; color: #fff; font-size: 26rpx; font-weight: 900; line-height: 72rpx; text-align: center; }
-.goal-card, .progress-panel, .nutrition-card, .panel { border-radius: 22rpx; background: #fff; border: 1rpx solid #dfe8ef; box-shadow: 0 8rpx 24rpx rgba(16,24,32,.05); }
-.goal-card { display: flex; align-items: center; justify-content: space-between; gap: 18rpx; margin: 20rpx 0; padding: 24rpx; }
-.goal-title { display: block; margin-top: 4rpx; color: #18212f; font-size: 34rpx; line-height: 1.15; font-weight: 950; }
-.ghost-btn { flex-shrink: 0; margin: 0; min-width: 156rpx; height: 64rpx; line-height: 64rpx; border-radius: 32rpx; background: #eef4f8; color: #344154; font-size: 24rpx; font-weight: 900; }
-.ghost-btn[disabled] { opacity: .5; }
-.progress-panel { padding: 24rpx; }
-.progress-row + .progress-row { margin-top: 20rpx; }
-.progress-head { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; margin-bottom: 10rpx; }
-.progress-label { color: #18212f; font-size: 25rpx; font-weight: 900; }
-.progress-value { color: #68778c; font-size: 22rpx; font-weight: 800; }
-.progress-track { height: 14rpx; border-radius: 999rpx; overflow: hidden; background: #edf2f7; }
-.progress-fill { height: 100%; border-radius: inherit; background: #4f8cff; }
-.progress-fill.good { background: #53d7b6; }
-.progress-fill.high { background: #f36d8d; }
-.progress-fill.low { background: #4f8cff; }
-.nutrition-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16rpx; margin: 20rpx 0; }
-.nutrition-card { padding: 22rpx; }
-.nutrition-value { display: block; margin: 8rpx 0; color: #18212f; font-size: 32rpx; font-weight: 950; }
-.panel { margin-bottom: 20rpx; padding: 28rpx; }
-.panel-head { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; margin-bottom: 18rpx; }
-.panel-title { color: #18212f; font-size: 30rpx; font-weight: 950; }
-.mini-btn { flex-shrink: 0; margin: 0; width: 112rpx; height: 60rpx; line-height: 60rpx; border-radius: 30rpx; background: #18212f; color: #fff; font-size: 24rpx; font-weight: 900; }
-.mini-btn[disabled] { background: #68778c; color: rgba(255,255,255,.72); }
-.meal-list { display: flex; flex-direction: column; gap: 22rpx; }
-.meal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10rpx; }
-.meal-label { display: block; color: #344154; font-size: 26rpx; font-weight: 950; }
-.meal-action { color: #68778c; font-size: 22rpx; font-weight: 800; }
-.food-chip-row { display: flex; flex-wrap: wrap; gap: 10rpx; margin-bottom: 12rpx; }
-.food-chip { padding: 9rpx 15rpx; border-radius: 999rpx; background: #e8f1ff; color: #2f6fd6; font-size: 22rpx; font-weight: 900; }
-textarea { width: 100%; height: 108rpx; padding: 18rpx 20rpx; border-radius: 16rpx; background: #f8fafc; color: #18212f; font-size: 26rpx; line-height: 1.45; box-sizing: border-box; }
-.suggestion-list { display: flex; flex-direction: column; gap: 12rpx; }
-.suggestion-item { padding: 18rpx 20rpx; border-radius: 16rpx; background: #f8fafc; color: #344154; font-size: 25rpx; line-height: 1.5; }
-.empty { padding: 40rpx 0; color: #68778c; font-size: 26rpx; text-align: center; }
-.recent-list { display: flex; flex-direction: column; gap: 12rpx; }
-.recent-row { display: flex; align-items: center; gap: 16rpx; padding: 18rpx 0; border-top: 1rpx solid #edf2f7; }
-.recent-row:first-child { border-top: 0; }
-.recent-date { flex-shrink: 0; width: 82rpx; color: #18212f; font-size: 25rpx; font-weight: 950; }
-.recent-text { min-width: 0; flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: #68778c; font-size: 24rpx; }
+.diet-page {
+  min-height: 100vh;
+  padding: 24rpx 24rpx 48rpx;
+  background: #f3f6f5;
+  box-sizing: border-box;
+}
+
+.nutrition-shell {
+  margin-bottom: 22rpx;
+  padding: 28rpx;
+  border-radius: 22rpx;
+  background: #ffffff;
+  border: 1rpx solid #e2e8f0;
+  box-shadow: 0 14rpx 38rpx rgba(16, 24, 32, .08);
+}
+
+.hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 22rpx;
+}
+
+.hero-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.hero-kicker,
+.hero-subtitle,
+.nutrition-label,
+.nutrition-desc,
+.panel-note,
+.goal-label {
+  display: block;
+  color: #64748b;
+  font-size: 22rpx;
+  line-height: 1.45;
+}
+
+.hero-title {
+  display: block;
+  margin: 10rpx 0 8rpx;
+  color: #101820;
+  font-size: 40rpx;
+  font-weight: 950;
+  line-height: 1.18;
+}
+
+.date-btn {
+  flex-shrink: 0;
+  min-width: 112rpx;
+  height: 68rpx;
+  padding: 0 20rpx;
+  border-radius: 34rpx;
+  background: #101820;
+  color: #ffffff;
+  font-size: 25rpx;
+  font-weight: 900;
+  line-height: 68rpx;
+  text-align: center;
+  box-shadow: 0 10rpx 22rpx rgba(16, 24, 32, .16);
+}
+
+.goal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+  margin-top: 24rpx;
+  padding: 20rpx 0 22rpx;
+  border-top: 1rpx solid #edf2f7;
+  border-bottom: 1rpx solid #edf2f7;
+}
+
+.goal-chip {
+  min-width: 0;
+  flex: 1;
+}
+
+.goal-title {
+  display: block;
+  margin-top: 4rpx;
+  color: #101820;
+  font-size: 32rpx;
+  line-height: 1.15;
+  font-weight: 950;
+}
+
+.ghost-btn {
+  flex-shrink: 0;
+  margin: 0;
+  min-width: 156rpx;
+  height: 62rpx;
+  line-height: 62rpx;
+  border-radius: 31rpx;
+  background: #eef4f8;
+  color: #334155;
+  font-size: 24rpx;
+  font-weight: 900;
+}
+
+.ghost-btn[disabled] {
+  opacity: .48;
+}
+
+.progress-panel {
+  padding: 24rpx 0 6rpx;
+}
+
+.progress-row + .progress-row {
+  margin-top: 20rpx;
+}
+
+.progress-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-bottom: 10rpx;
+}
+
+.progress-label {
+  color: #101820;
+  font-size: 25rpx;
+  font-weight: 900;
+}
+
+.progress-value {
+  flex-shrink: 0;
+  color: #64748b;
+  font-size: 22rpx;
+  font-weight: 800;
+}
+
+.progress-track {
+  height: 14rpx;
+  border-radius: 999rpx;
+  overflow: hidden;
+  background: #edf2f7;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: #2563eb;
+  transition: width .18s ease-out;
+}
+
+.progress-fill.good {
+  background: #22c55e;
+}
+
+.progress-fill.high {
+  background: #d97706;
+}
+
+.progress-fill.low {
+  background: #2563eb;
+}
+
+.nutrition-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14rpx;
+  margin-top: 20rpx;
+}
+
+.nutrition-card {
+  min-height: 124rpx;
+  padding: 20rpx;
+  border-radius: 16rpx;
+  background: #f8fafc;
+  box-sizing: border-box;
+}
+
+.nutrition-value {
+  display: block;
+  margin: 8rpx 0 4rpx;
+  color: #101820;
+  font-size: 30rpx;
+  line-height: 1.1;
+  font-weight: 950;
+}
+
+.panel {
+  margin-bottom: 22rpx;
+  padding: 28rpx;
+  border-radius: 22rpx;
+  background: #ffffff;
+  border: 1rpx solid #e2e8f0;
+  box-shadow: 0 8rpx 24rpx rgba(16, 24, 32, .05);
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.panel-title {
+  color: #101820;
+  font-size: 30rpx;
+  line-height: 1.25;
+  font-weight: 950;
+}
+
+.mini-btn {
+  flex-shrink: 0;
+  margin: 0;
+  width: 112rpx;
+  height: 60rpx;
+  line-height: 60rpx;
+  border-radius: 30rpx;
+  background: #101820;
+  color: #ffffff;
+  font-size: 24rpx;
+  font-weight: 900;
+}
+
+.mini-btn[disabled] {
+  background: #64748b;
+  color: rgba(255, 255, 255, .76);
+}
+
+.mini-btn:active,
+.ghost-btn:active,
+.food-chip:active,
+.recent-row:active {
+  transform: translateY(1rpx);
+}
+
+.meal-panel {
+  padding-bottom: 30rpx;
+}
+
+.meal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.meal-item {
+  padding-top: 20rpx;
+  border-top: 1rpx solid #edf2f7;
+}
+
+.meal-item:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.meal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12rpx;
+}
+
+.meal-label {
+  display: block;
+  color: #101820;
+  font-size: 27rpx;
+  line-height: 1.3;
+  font-weight: 950;
+}
+
+.meal-action {
+  flex-shrink: 0;
+  padding: 8rpx 0 8rpx 18rpx;
+  color: #64748b;
+  font-size: 22rpx;
+  font-weight: 800;
+}
+
+.food-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin-bottom: 14rpx;
+}
+
+.food-chip {
+  padding: 10rpx 16rpx;
+  border-radius: 999rpx;
+  background: #eef4f8;
+  color: #334155;
+  font-size: 22rpx;
+  line-height: 1.25;
+  font-weight: 900;
+}
+
+textarea {
+  width: 100%;
+  min-height: 118rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 14rpx;
+  background: #f8fafc;
+  color: #101820;
+  font-size: 26rpx;
+  line-height: 1.45;
+  box-sizing: border-box;
+}
+
+.suggestion-panel {
+  background: #f9fbfa;
+}
+
+.suggestion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 16rpx;
+  background: #ffffff;
+  border: 1rpx solid #e2e8f0;
+  color: #334155;
+  font-size: 25rpx;
+  line-height: 1.5;
+}
+
+.suggestion-index {
+  flex-shrink: 0;
+  width: 34rpx;
+  height: 34rpx;
+  border-radius: 17rpx;
+  background: #22c55e;
+  color: #101820;
+  font-size: 20rpx;
+  line-height: 34rpx;
+  font-weight: 950;
+  text-align: center;
+}
+
+.empty {
+  padding: 40rpx 0;
+  color: #64748b;
+  font-size: 26rpx;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.recent-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.recent-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 20rpx 0;
+  border-top: 1rpx solid #edf2f7;
+}
+
+.recent-row:first-child {
+  border-top: 0;
+}
+
+.recent-date {
+  flex-shrink: 0;
+  width: 88rpx;
+  height: 44rpx;
+  border-radius: 22rpx;
+  background: #eef4f8;
+  color: #101820;
+  font-size: 23rpx;
+  line-height: 44rpx;
+  font-weight: 950;
+  text-align: center;
+}
+
+.recent-text {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: #64748b;
+  font-size: 24rpx;
+}
 </style>
