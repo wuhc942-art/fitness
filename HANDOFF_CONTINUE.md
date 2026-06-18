@@ -137,6 +137,43 @@ Package sizes after copy:
 - `exercise-assets`: about 0.176 MB
 - Test files in upload folder: 0
 
+### 0c. Profile release-ready wording
+
+Adjusted the profile page to look like a release build instead of a placeholder/test build.
+
+Files changed:
+
+```text
+src/pages/profile/profile.vue
+```
+
+Important behavior:
+
+- removed visible `VIP会员`, `免费版`, `会员状态`, `微信登录`, `待接入`, `规划中`, and cloud-sync placeholder messaging from the profile page
+- changed the profile hero to `本地训练档案`
+- changed the abilities panel to show only currently usable training/data capabilities
+- replaced the cloud-login placeholder panel with `数据管理`, explaining local storage and linking to backup/restore settings
+- kept the legacy `memberStatus` field in local profile data for compatibility, but it is no longer exposed in the UI
+
+Verification for this round:
+
+```text
+npm run type-check passed
+npm run build:mp-weixin passed
+```
+
+Copied output:
+
+```text
+D:\dist-upload-home-ai-v1
+```
+
+Package sizes after copy:
+
+- Main package: about 0.370 MB
+- `exercise-assets`: about 0.176 MB
+- Test files in upload folder: 0
+
 ### 1. Product context and design workflow files
 
 Added:

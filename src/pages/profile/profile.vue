@@ -4,7 +4,7 @@
       <view class="avatar">{{ avatarText }}</view>
       <view class="hero-copy">
         <text class="nickname">{{ profile.nickname }}</text>
-        <text class="member">{{ profile.memberStatus === 'vip' ? 'VIP会员' : '免费版' }} · {{ growth.levelName }}</text>
+        <text class="member">本地训练档案 · {{ growth.levelName }}</text>
       </view>
       <button class="edit-btn" @click="showEdit = true">编辑</button>
     </view>
@@ -43,12 +43,12 @@
 
     <view class="panel ability-panel">
       <view class="panel-head">
-        <text class="panel-title">成长能力</text>
-        <text class="panel-note">{{ profile.memberStatus === 'vip' ? '能力已开启' : '逐步开放' }}</text>
+        <text class="panel-title">训练能力</text>
+        <text class="panel-note">已启用</text>
       </view>
       <view class="ability-summary">
         <view>
-          <text class="ability-kicker">能力点</text>
+          <text class="ability-kicker">成长积分</text>
           <text class="ability-score">{{ growth.points }}</text>
         </view>
         <view class="ability-next">
@@ -67,12 +67,13 @@
       </view>
     </view>
 
-    <view class="panel">
+    <view class="panel data-panel">
       <view class="panel-head">
-        <text class="panel-title">微信登录</text>
-        <text class="panel-note">待接入</text>
+        <text class="panel-title">数据管理</text>
+        <text class="panel-note">本机保存</text>
       </view>
-      <text class="about-text">当前为本地用户中心。后续接入云端后，可以使用微信头像昵称、同步数据、会员状态和成长积分。</text>
+      <text class="about-text">训练记录、计划、身体数据和饮食记录会保存在当前小程序本地。建议定期导出备份，换机或清理缓存前先保存数据。</text>
+      <button class="settings-btn" @click="goSettings">备份与恢复</button>
     </view>
 
     <view v-if="showEdit" class="modal-mask" @click="closeEditModal">
@@ -85,13 +86,6 @@
           <view class="field">
             <text class="label">昵称</text>
             <input v-model="profile.nickname" maxlength="16" placeholder="FitAI 用户" />
-          </view>
-          <view class="field">
-            <text class="label">会员状态</text>
-            <view class="segmented">
-              <view class="seg-item" :class="{ active: profile.memberStatus === 'free' }" @click="profile.memberStatus = 'free'">免费版</view>
-              <view class="seg-item" :class="{ active: profile.memberStatus === 'vip' }" @click="profile.memberStatus = 'vip'">VIP</view>
-            </view>
           </view>
         </view>
         <view class="modal-actions">
@@ -142,40 +136,42 @@ const abilityFeatures = computed(() => [
   {
     title: '基础训练记录',
     desc: `已累计 ${growth.stats.trainingCount} 次训练`,
-    status: '已解锁',
+    status: '可用',
     tone: 'ready'
   },
   {
-    title: 'AI训练计划',
-    desc: growth.stats.planCount > 0 ? `已创建 ${growth.stats.planCount} 个计划` : '可根据目标生成训练安排',
-    status: profile.memberStatus === 'vip' ? '已开启' : '可使用',
+    title: '训练计划',
+    desc: growth.stats.planCount > 0 ? `已创建 ${growth.stats.planCount} 个计划` : '创建计划后可安排每周训练',
+    status: '可用',
     tone: 'active'
   },
   {
-    title: 'AI训练分析',
+    title: '训练分析',
     desc: growth.stats.trainingCount > 0 ? '结合训练记录查看进步趋势' : '完成训练后开始分析',
-    status: growth.stats.trainingCount > 0 ? '可分析' : '需记录',
+    status: growth.stats.trainingCount > 0 ? '可用' : '待记录',
     tone: growth.stats.trainingCount > 0 ? 'active' : 'locked'
   },
   {
-    title: 'AI饮食建议',
-    desc: '结合饮食记录和训练目标给出建议',
-    status: '规划中',
-    tone: 'planned'
+    title: '身体数据',
+    desc: growth.stats.bodyRecordCount > 0 ? `已记录 ${growth.stats.bodyRecordCount} 条身体数据` : '记录体重和围度，观察长期变化',
+    status: growth.stats.bodyRecordCount > 0 ? '可用' : '待记录',
+    tone: growth.stats.bodyRecordCount > 0 ? 'ready' : 'locked'
   },
   {
-    title: '数据导出',
-    desc: '整理本地训练、身体和计划数据',
-    status: '可使用',
+    title: '饮食记录',
+    desc: '记录每日饮食并查看基础营养建议',
+    status: '可用',
     tone: 'ready'
   },
   {
-    title: '云端同步',
-    desc: '微信登录和云端账号接入后开放',
-    status: '待接入',
-    tone: 'locked'
+    title: '数据备份',
+    desc: '在设置中导出或导入本地备份文件',
+    status: '可用',
+    tone: 'active'
   }
 ])
+
+const goSettings = () => uni.navigateTo({ url: '/pages/settings/settings' })
 
 const load = async () => {
   Object.assign(profile, await userServiceLocal.getProfile())
@@ -243,7 +239,6 @@ onShow(load)
 .feature-row { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; padding: 18rpx 18rpx 18rpx 20rpx; border-radius: 16rpx; background: #f8fafc; border: 1rpx solid #edf2f7; }
 .feature-row.active { background: #f3f8ff; border-color: #d9e8ff; }
 .feature-row.ready { background: #f3fbf8; border-color: #d8f3eb; }
-.feature-row.planned { background: #fffaf0; border-color: #f6e6c5; }
 .feature-row.locked { background: #f7f9fb; border-color: #e4ebf1; }
 .feature-copy { min-width: 0; flex: 1; }
 .feature-title { display: block; color: #18212f; font-size: 26rpx; line-height: 1.35; font-weight: 900; }
@@ -251,8 +246,10 @@ onShow(load)
 .feature-status { flex-shrink: 0; min-width: 88rpx; padding: 8rpx 12rpx; border-radius: 999rpx; background: #eef4f8; color: #344154; font-size: 21rpx; line-height: 1.2; font-weight: 900; text-align: center; }
 .feature-row.active .feature-status { background: #e8f1ff; color: #2f6fd6; }
 .feature-row.ready .feature-status { background: #e9fbf6; color: #16856c; }
-.feature-row.planned .feature-status { background: #fff3d8; color: #805421; }
 .feature-row.locked .feature-status { background: #e9eef3; color: #68778c; }
+.data-panel { padding-bottom: 24rpx; }
+.settings-btn { margin: 20rpx 0 0; width: 100%; height: 76rpx; line-height: 76rpx; border-radius: 38rpx; background: #4f8cff; color: #fff; font-size: 27rpx; font-weight: 900; box-shadow: 0 12rpx 24rpx rgba(79,140,255,.22); }
+.settings-btn:active { transform: translateY(1rpx); }
 .modal-mask { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 20; display: flex; align-items: flex-end; background: rgba(16,24,32,.52); }
 .modal { width: 100%; border-radius: 24rpx 24rpx 0 0; background: #fff; overflow: hidden; }
 .modal-head, .modal-actions { display: flex; align-items: center; justify-content: space-between; padding: 28rpx; border-bottom: 1rpx solid #edf2f7; }
@@ -262,9 +259,6 @@ onShow(load)
 .field { margin-top: 24rpx; }
 .label { display: block; margin-bottom: 12rpx; color: #4a5568; font-size: 24rpx; font-weight: 800; }
 input { width: 100%; height: 76rpx; padding: 0 20rpx; border-radius: 10rpx; background: #f8fafc; color: #101820; font-size: 28rpx; box-sizing: border-box; }
-.segmented { display: grid; grid-template-columns: 1fr 1fr; gap: 10rpx; padding: 8rpx; border-radius: 12rpx; background: #edf2f7; }
-.seg-item { height: 62rpx; border-radius: 10rpx; color: #4a5568; font-size: 24rpx; font-weight: 900; line-height: 62rpx; text-align: center; }
-.seg-item.active { background: #101820; color: #fff; }
 .modal-actions { gap: 16rpx; border-top: 1rpx solid #edf2f7; border-bottom: 0; }
 .modal-actions button { flex: 1; height: 78rpx; line-height: 78rpx; border-radius: 39rpx; font-size: 28rpx; font-weight: 900; }
 .modal-actions button[disabled] { opacity: .65; }
