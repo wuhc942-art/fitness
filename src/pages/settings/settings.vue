@@ -99,18 +99,7 @@
 import { computed, reactive, ref, onMounted } from 'vue'
 import { MISSED_TRAINING_TEMPLATE_ID, reminderServiceLocal, type LocalReminderSettings } from '@/services/reminder.local'
 import { normalizeBackupDataForImport } from '@/utils/backup-normalize'
-
-const exportKeys = [
-  'fitness_training_records',
-  'fitness_training_templates',
-  'fitness_training_plans',
-  'fitness_body_data_records',
-  'fitness_body_profile',
-  'fitness_diet_records',
-  'fitness_local_reminder_settings',
-  'fitness_missed_plan_reminder_last_shown',
-  'fitness_user_profile'
-]
+import { arrayBackupKeys, backupStorageKeys, buildBackupPreview, createBackupFileName, formatBackupPreview, readBackupStorage, type BackupStorageKey } from '@/utils/backup-data'
 
 const settings = reactive<LocalReminderSettings>({
   dailyReminder: { enabled: false, time: '19:00' },
@@ -167,14 +156,6 @@ interface WxBackupApi {
 }
 
 const wxBackupApi = wx as unknown as WxBackupApi
-
-const arrayBackupKeys = new Set([
-  'fitness_training_records',
-  'fitness_training_templates',
-  'fitness_training_plans',
-  'fitness_body_data_records',
-  'fitness_diet_records'
-])
 
 const subscribeStateText = computed(() => {
   return settings.missedPlanReminder.subscribed ? '已获得微信订阅授权。' : '还未申请订阅授权。'
@@ -239,30 +220,27 @@ const requestSubscribe = async () => {
   }
 }
 
+const writeBackupFile = (data: Record<string, any>, prefix = 'fitai-backup') => {
+  const fileName = createBackupFileName(prefix)
+  const filePath = `${wxBackupApi.env.USER_DATA_PATH}/${fileName}`
+  const fs = wxBackupApi.getFileSystemManager()
+
+  return new Promise<{ fileName: string; filePath: string }>((resolve, reject) => {
+    fs.writeFile({
+      filePath,
+      data: JSON.stringify(data, null, 2),
+      encoding: 'utf8',
+      success: () => resolve({ fileName, filePath }),
+      fail: () => reject(new Error('write backup failed'))
+    })
+  })
+}
+
 const exportLocalData = () => {
   if (isExporting.value || isImporting.value || isClearing.value) return
   isExporting.value = true
-  const data: Record<string, any> = {
-    exportedAt: new Date().toISOString(),
-    version: '1.0.0'
-  }
-  exportKeys.forEach((key) => {
-    try {
-      const raw = uni.getStorageSync(key)
-      data[key] = typeof raw === 'string' ? JSON.parse(raw || 'null') : raw
-    } catch {
-      data[key] = uni.getStorageSync(key)
-    }
-  })
-
-  const fileName = `fitai-backup-${Date.now()}.json`
-  const filePath = `${wxBackupApi.env.USER_DATA_PATH}/${fileName}`
-  const fs = wxBackupApi.getFileSystemManager()
-  fs.writeFile({
-    filePath,
-    data: JSON.stringify(data, null, 2),
-    encoding: 'utf8',
-    success: () => {
+  writeBackupFile(readBackupStorage((key) => uni.getStorageSync(key)))
+    .then(({ fileName, filePath }) => {
       isExporting.value = false
       uni.showModal({
         title: '导出成功',
@@ -273,19 +251,18 @@ const exportLocalData = () => {
           uni.openDocument({ filePath, showMenu: true })
         }
       })
-    },
-    fail: () => {
+    })
+    .catch(() => {
       isExporting.value = false
       uni.showToast({ title: '导出失败', icon: 'none' })
-    }
-  })
+    })
 }
 
 const writeImportedStorage = (key: string, value: any) => {
   uni.setStorageSync(key, typeof value === 'string' ? value : JSON.stringify(value))
 }
 
-function validateBackupData(parsed: any): { ok: true; keys: string[] } | { ok: false; message: string } {
+function validateBackupData(parsed: any): { ok: true; keys: BackupStorageKey[] } | { ok: false; message: string } {
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
     return { ok: false, message: '备份文件格式不正确' }
   }
@@ -294,7 +271,7 @@ function validateBackupData(parsed: any): { ok: true; keys: string[] } | { ok: f
     return { ok: false, message: '这不是 FitAI 导出的备份文件' }
   }
 
-  const matchedKeys = exportKeys.filter((key) => Object.prototype.hasOwnProperty.call(parsed, key))
+  const matchedKeys = backupStorageKeys.filter((key) => Object.prototype.hasOwnProperty.call(parsed, key))
   if (!matchedKeys.length) return { ok: false, message: '备份文件里没有可恢复的数据' }
 
   const invalidArrayKey = matchedKeys.find((key) => arrayBackupKeys.has(key) && parsed[key] != null && !Array.isArray(parsed[key]))
@@ -307,7 +284,7 @@ const importLocalData = () => {
   if (isImporting.value || isExporting.value || isClearing.value) return
   uni.showModal({
     title: '导入备份',
-    content: '导入会覆盖当前本地数据。建议先导出一份当前数据再继续。',
+    content: '导入会覆盖当前本地数据。选择文件后会先展示数据清单，并自动保存一份导入前备份。',
     confirmText: '选择文件',
     success: (modalRes) => {
       if (!modalRes.confirm) return
@@ -336,10 +313,28 @@ const importLocalData = () => {
                   return
                 }
                 const normalized = normalizeBackupDataForImport(parsed)
-                validation.keys.forEach((key) => writeImportedStorage(key, normalized[key]))
-                loadSettings()
-                isImporting.value = false
-                uni.showToast({ title: '导入成功', icon: 'success' })
+                const preview = formatBackupPreview(buildBackupPreview(normalized, validation.keys))
+                uni.showModal({
+                  title: '确认导入内容',
+                  content: `将恢复以下数据：\n${preview}\n\n继续前会自动保存当前本地数据备份。`,
+                  confirmText: '确认导入',
+                  success: async (confirmRes) => {
+                    if (!confirmRes.confirm) {
+                      isImporting.value = false
+                      return
+                    }
+                    try {
+                      await writeBackupFile(readBackupStorage((key) => uni.getStorageSync(key)), 'fitai-before-import')
+                      validation.keys.forEach((key) => writeImportedStorage(key, normalized[key]))
+                      loadSettings()
+                      isImporting.value = false
+                      uni.showToast({ title: '导入成功', icon: 'success' })
+                    } catch (error) {
+                      isImporting.value = false
+                      uni.showToast({ title: '导入前备份失败，已停止导入', icon: 'none' })
+                    }
+                  }
+                })
               } catch (error) {
                 isImporting.value = false
                 uni.showToast({ title: '备份文件解析失败', icon: 'none' })
@@ -370,7 +365,7 @@ const confirmClearCache = () => {
     success: (res) => {
       if (!res.confirm) return
       isClearing.value = true
-      exportKeys.forEach((key) => uni.removeStorageSync(key))
+      backupStorageKeys.forEach((key) => uni.removeStorageSync(key))
       isClearing.value = false
       uni.showToast({ title: '已清空', icon: 'success' })
     }

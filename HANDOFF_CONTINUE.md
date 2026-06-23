@@ -1,6 +1,6 @@
 # HANDOFF CONTINUE - FitAI WeChat Mini Program
 
-Last updated: 2026-06-18
+Last updated: 2026-06-23
 
 ## Current Working Goal
 
@@ -321,6 +321,42 @@ Copied output:
 D:\dist-upload-home-ai-v1
 ```
 
+### 0h. Backup import preview and pre-import safety backup
+
+Improved the local backup import flow from a real-user data-safety perspective.
+
+Files changed:
+
+```text
+src/pages/settings/settings.vue
+src/utils/backup-data.ts
+src/utils/backup-data.test.ts
+```
+
+Important behavior:
+
+- backup storage keys, labels, preview formatting, and backup file naming are centralized in `src/utils/backup-data.ts`
+- exporting local data now uses the same shared backup collector as import safety backup
+- importing a backup now shows a recovery preview with record/category counts before overwrite
+- confirming import first writes a `fitai-before-import-*.json` backup of current local data
+- if the pre-import backup write fails, import stops before overwriting local storage
+- clearing local data uses the shared backup key list, reducing drift between export/import/clear flows
+
+Verification for this round:
+
+```text
+backup data assertions passed
+backup normalize assertions passed
+npm run type-check passed
+npm run build:mp-weixin passed
+```
+
+Copied output:
+
+```text
+D:\dist-upload-home-ai-v1
+```
+
 ### 1. Product context and design workflow files
 
 Added:
@@ -535,12 +571,16 @@ The last successful verification before this handoff:
 
 ```powershell
 $env:Path = 'C:\Program Files\nodejs;' + $env:Path
+# custom Node assertion: src/utils/backup-data.test.ts
+# custom Node assertion: src/utils/backup-normalize.test.ts
 & 'C:\Program Files\nodejs\npm.cmd' run type-check
 & 'C:\Program Files\nodejs\npm.cmd' run build:mp-weixin
 ```
 
 Build result:
 
+- `backup data assertions`: passed
+- `backup normalize assertions`: passed
 - `npm run type-check`: passed
 - `npm run build:mp-weixin`: passed
 - Sass legacy JS API warnings still appear; they are non-blocking
@@ -550,11 +590,6 @@ Latest copied upload folder:
 ```text
 D:\dist-upload-home-ai-v1
 ```
-
-Latest package sizes after the last full code round:
-
-- Main package: about 374.6 KB
-- `exercise-assets`: about 180.4 KB
 
 Recheck sizes internally after every next change, but do not report package-size details to the user unless asked.
 
