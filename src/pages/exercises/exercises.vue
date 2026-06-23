@@ -188,7 +188,7 @@ import {
   type ExerciseEquipment,
   type ExerciseLibraryItem
 } from '@/services/exercise-library.local'
-import { exerciseDbService, type ExerciseDbItem } from '@/services/exercisedb.local'
+import { exerciseDbService, type ExerciseDbItem, type ExerciseDbSource } from '@/services/exercisedb.local'
 import { translateExerciseName } from '@/utils/exercise-name-translate'
 import { hasExerciseGif, resolveExerciseGif } from '@/services/exercise-media.local'
 import { translateExerciseStep, translateExerciseTags } from '@/utils/exercise-content-translate'
@@ -204,6 +204,8 @@ const selectedOnline = ref<ExerciseDbItem | null>(null)
 const onlineExercises = ref<ExerciseDbItem[]>([])
 const onlineLoading = ref(false)
 const onlineError = ref('')
+const onlineNotice = ref('')
+const onlineSource = ref<ExerciseDbSource | ''>('')
 const onlineLimit = ref(20)
 const showAllOnline = ref(false)
 const isNavigating = ref(false)
@@ -222,7 +224,10 @@ const bodyPartLabels: Record<ExerciseBodyPart, string> = {
 const onlineStatusText = computed(() => {
   if (onlineLoading.value) return '正在加载 ExerciseDB 动作库，首次打开会多花几秒...'
   if (onlineError.value) return onlineError.value
+  if (onlineNotice.value) return onlineNotice.value
   if (!onlineExercises.value.length) return '点击刷新或切换到 ExerciseDB 后加载在线动作，避免免费接口访问过频。'
+  if (onlineSource.value === 'cache') return '当前显示本地缓存动作，刷新可尝试获取最新 ExerciseDB。'
+  if (onlineSource.value === 'snapshot') return '当前显示内置演示动作，在线库可用后会展示更多 GIF。'
   if (!showAllOnline.value) return `当前优先展示 ${optimizedOnlineCount.value} 个带 GIF 演示的 ExerciseDB 动作。搜不到时再查看更多文字动作。`
   return `正在显示更多文字动作：部分动作没有 GIF 演示，名称仅供搜索参考。`
 })
@@ -325,11 +330,15 @@ async function loadOnlineExercises(forceRefresh = false) {
   if (onlineLoading.value) return
   onlineLoading.value = true
   onlineError.value = ''
+  onlineNotice.value = ''
   try {
-    const items = await exerciseDbService.getExercises(forceRefresh)
-    onlineExercises.value = Array.isArray(items) ? items : []
+    const result = await exerciseDbService.getExercisesWithMeta(forceRefresh)
+    onlineExercises.value = Array.isArray(result.items) ? result.items : []
+    onlineSource.value = result.source
+    onlineNotice.value = result.stale ? result.message : ''
     if (!selectedOnline.value && onlineExercises.value.length) selectedOnline.value = onlineExercises.value[0]
   } catch (error: any) {
+    onlineSource.value = ''
     onlineError.value = error?.message || '在线动作库访问失败，本地常用动作仍可正常使用。'
   } finally {
     onlineLoading.value = false

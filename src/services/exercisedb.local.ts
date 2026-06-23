@@ -22,6 +22,15 @@ interface ExerciseDbCache {
   items: ExerciseDbItem[]
 }
 
+export type ExerciseDbSource = 'remote' | 'cache' | 'snapshot'
+
+export interface ExerciseDbLoadResult {
+  items: ExerciseDbItem[]
+  source: ExerciseDbSource
+  stale: boolean
+  message: string
+}
+
 interface ExerciseDbResponse {
   success?: boolean
   meta?: {
@@ -98,10 +107,15 @@ function writeCache(items: ExerciseDbItem[]) {
 }
 
 export const exerciseDbService = {
-  async getExercises(forceRefresh = false): Promise<ExerciseDbItem[]> {
+  async getExercisesWithMeta(forceRefresh = false): Promise<ExerciseDbLoadResult> {
     const cache = readCache()
     if (!forceRefresh && cache && Date.now() - cache.savedAt < CACHE_TTL) {
-      return cache.items
+      return {
+        items: cache.items,
+        source: 'cache',
+        stale: false,
+        message: '已显示本地缓存动作，刷新可尝试获取最新 ExerciseDB。'
+      }
     }
 
     const items: ExerciseDbItem[] = []
@@ -120,14 +134,55 @@ export const exerciseDbService = {
         cursor = getNextCursor(response)
         if (!cursor) break
       }
-    } catch (error) {
-      if (cache?.items?.length) return cache.items
-      if (EXERCISEDB_SNAPSHOT.length) return EXERCISEDB_SNAPSHOT
+    } catch (error: any) {
+      if (cache?.items?.length) {
+        return {
+          items: cache.items,
+          source: 'cache',
+          stale: true,
+          message: '在线动作库暂时不可用，已显示上次缓存动作。'
+        }
+      }
+      if (EXERCISEDB_SNAPSHOT.length) {
+        return {
+          items: EXERCISEDB_SNAPSHOT,
+          source: 'snapshot',
+          stale: true,
+          message: '在线动作库暂时不可用，已显示内置演示动作。'
+        }
+      }
       throw error
     }
 
+    if (!items.length) {
+      if (cache?.items?.length) {
+        return {
+          items: cache.items,
+          source: 'cache',
+          stale: true,
+          message: '在线动作库暂未返回数据，已保留上次缓存动作。'
+        }
+      }
+      return {
+        items: EXERCISEDB_SNAPSHOT,
+        source: 'snapshot',
+        stale: true,
+        message: '在线动作库暂未返回数据，已显示内置演示动作。'
+      }
+    }
+
     writeCache(items)
-    return items
+    return {
+      items,
+      source: 'remote',
+      stale: false,
+      message: '已加载 ExerciseDB 在线动作。'
+    }
+  },
+
+  async getExercises(forceRefresh = false): Promise<ExerciseDbItem[]> {
+    const result = await this.getExercisesWithMeta(forceRefresh)
+    return result.items
   },
 
   clearCache() {

@@ -357,6 +357,40 @@ Copied output:
 D:\dist-upload-home-ai-v1
 ```
 
+### 0i. ExerciseDB fallback status and empty-remote protection
+
+Improved ExerciseDB resilience so the action library behaves more calmly when the remote source fails, rate-limits, returns no items, or WeChat domain configuration blocks the request.
+
+Files changed:
+
+```text
+src/services/exercisedb.local.ts
+src/services/exercisedb.local.test.ts
+src/pages/exercises/exercises.vue
+```
+
+Important behavior:
+
+- added `getExercisesWithMeta(...)` while keeping the existing `getExercises(...)` compatibility API
+- ExerciseDB loads now return source metadata: `remote`, `cache`, or `snapshot`
+- remote request failure falls back to cached data first, then bundled snapshot
+- empty remote responses no longer overwrite a valid cache with an empty list
+- the ExerciseDB page now shows calm status text for cache/snapshot fallback instead of treating every fallback as a hard error
+
+Verification for this round:
+
+```text
+exercisedb resilience assertions passed
+npm run type-check passed
+npm run build:mp-weixin passed
+```
+
+Copied output:
+
+```text
+D:\dist-upload-home-ai-v1
+```
+
 ### 1. Product context and design workflow files
 
 Added:
@@ -573,6 +607,7 @@ The last successful verification before this handoff:
 $env:Path = 'C:\Program Files\nodejs;' + $env:Path
 # custom Node assertion: src/utils/backup-data.test.ts
 # custom Node assertion: src/utils/backup-normalize.test.ts
+# custom Node assertion: src/services/exercisedb.local.test.ts
 & 'C:\Program Files\nodejs\npm.cmd' run type-check
 & 'C:\Program Files\nodejs\npm.cmd' run build:mp-weixin
 ```
@@ -581,6 +616,7 @@ Build result:
 
 - `backup data assertions`: passed
 - `backup normalize assertions`: passed
+- `exercisedb resilience assertions`: passed
 - `npm run type-check`: passed
 - `npm run build:mp-weixin`: passed
 - Sass legacy JS API warnings still appear; they are non-blocking
