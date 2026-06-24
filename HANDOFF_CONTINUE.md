@@ -425,6 +425,36 @@ Copied output:
 D:\dist-upload-home-ai-v1
 ```
 
+### 0k. Home quick action icon polish
+
+Polished the home quick action grid after the user said the existing shortcut UI looked too plain with only numbers/characters.
+
+Files changed:
+
+```text
+src/pages/index/index.vue
+```
+
+Important behavior:
+
+- replaced single-character shortcut badges with lightweight CSS-drawn pictogram icons
+- added distinct soft color tones for record, plan, exercise library, template, history, progress, body, diet, AI plan, reminder, and profile
+- kept the existing four-column grid and navigation behavior unchanged
+- no image assets were added, keeping package footprint low
+
+Verification for this round:
+
+```text
+npm run type-check passed
+npm run build:mp-weixin passed
+```
+
+Copied output:
+
+```text
+D:\dist-upload-home-ai-v1
+```
+
 ### 1. Product context and design workflow files
 
 Added:

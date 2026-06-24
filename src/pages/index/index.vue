@@ -101,8 +101,10 @@
 
     <view class="quick-grid">
       <view v-for="item in quickActions" :key="item.label" class="quick-item" @click="goQuick(item.url)">
-        <view class="quick-icon-wrap" :class="item.tone">
-          <text class="quick-icon">{{ item.icon }}</text>
+        <view class="quick-icon-wrap" :class="[item.tone, `quick-icon-${item.icon}`]">
+          <view class="quick-glyph">
+            <view class="glyph-core"></view>
+          </view>
         </view>
         <text class="quick-label">{{ item.label }}</text>
       </view>
@@ -153,17 +155,17 @@ useMiniProgramShare({
 })
 
 const quickActions = [
-  { icon: '记', tone: 'primary', label: '记录', url: '/pages/training-record/training-record' },
-  { icon: '计', tone: 'default', label: '计划', url: '/pages/plans/plans' },
-  { icon: '动', tone: 'default', label: '动作库', url: '/pages/exercises/exercises' },
-  { icon: '模', tone: 'default', label: '模板', url: '/pages/templates/templates' },
-  { icon: '史', tone: 'default', label: '历史', url: '/pages/history-query/history-query' },
-  { icon: '图', tone: 'default', label: '进步', url: '/pages/charts/charts' },
-  { icon: '身', tone: 'default', label: '身体', url: '/pages/body-data/body-data' },
-  { icon: '食', tone: 'default', label: '饮食', url: '/pages/diet/diet' },
-  { icon: 'AI', tone: 'soft', label: 'AI计划', url: '/pages/ai-plan/ai-plan' },
-  { icon: '铃', tone: 'soft', label: '提醒', url: '/pages/reminders/reminders' },
-  { icon: '我', tone: 'soft', label: '我的', url: '/pages/profile/profile' }
+  { icon: 'record', tone: 'primary', label: '记录', url: '/pages/training-record/training-record' },
+  { icon: 'plan', tone: 'blue', label: '计划', url: '/pages/plans/plans' },
+  { icon: 'exercise', tone: 'mint', label: '动作库', url: '/pages/exercises/exercises' },
+  { icon: 'template', tone: 'lilac', label: '模板', url: '/pages/templates/templates' },
+  { icon: 'history', tone: 'peach', label: '历史', url: '/pages/history-query/history-query' },
+  { icon: 'chart', tone: 'sky', label: '进步', url: '/pages/charts/charts' },
+  { icon: 'body', tone: 'rose', label: '身体', url: '/pages/body-data/body-data' },
+  { icon: 'diet', tone: 'leaf', label: '饮食', url: '/pages/diet/diet' },
+  { icon: 'ai', tone: 'violet', label: 'AI计划', url: '/pages/ai-plan/ai-plan' },
+  { icon: 'bell', tone: 'amber', label: '提醒', url: '/pages/reminders/reminders' },
+  { icon: 'profile', tone: 'soft', label: '我的', url: '/pages/profile/profile' }
 ]
 
 const todayText = computed(() => {
@@ -713,12 +715,12 @@ onShow(() => {
 .quick-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 14rpx;
+  gap: 16rpx;
 }
 
 .quick-item {
-  min-height: 144rpx;
-  padding: 18rpx 8rpx;
+  min-height: 146rpx;
+  padding: 16rpx 8rpx 14rpx;
   text-align: center;
   box-sizing: border-box;
 }
@@ -728,31 +730,304 @@ onShow(() => {
 }
 
 .quick-icon-wrap {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 68rpx;
-  height: 68rpx;
+  width: 74rpx;
+  height: 74rpx;
   margin: 0 auto;
-  border-radius: 20rpx;
-  background: #eef2f4;
+  border-radius: 24rpx;
+  background: #eef4ff;
+  color: #2f80ed;
+  box-shadow: inset 0 -6rpx 12rpx rgba(47, 128, 237, .08);
+  overflow: hidden;
 }
 
-.quick-icon-wrap.primary {
-  background: #22c55e;
+.quick-icon-wrap::after {
+  content: "";
+  position: absolute;
+  right: 10rpx;
+  top: 10rpx;
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, .72);
 }
 
-.quick-icon-wrap.soft {
-  background: #f0fdf4;
+.quick-icon-wrap.primary { background: #e8f6ef; color: #16a34a; }
+.quick-icon-wrap.blue { background: #eaf3ff; color: #2f80ed; }
+.quick-icon-wrap.mint { background: #e6fbf6; color: #0f9f85; }
+.quick-icon-wrap.lilac { background: #f0edff; color: #7462e8; }
+.quick-icon-wrap.peach { background: #fff1e7; color: #e07035; }
+.quick-icon-wrap.sky { background: #e7f7ff; color: #1596d4; }
+.quick-icon-wrap.rose { background: #ffeef4; color: #e65d8d; }
+.quick-icon-wrap.leaf { background: #eff9e8; color: #4f9b28; }
+.quick-icon-wrap.violet { background: #f2edff; color: #8358e8; }
+.quick-icon-wrap.amber { background: #fff6db; color: #d29114; }
+.quick-icon-wrap.soft { background: #f0f4f8; color: #44556a; }
+
+.quick-glyph {
+  position: relative;
+  width: 42rpx;
+  height: 42rpx;
+  color: inherit;
 }
 
-.quick-icon {
-  display: block;
-  color: #101820;
-  height: 46rpx;
-  font-size: 30rpx;
-  line-height: 46rpx;
-  font-weight: 900;
+.quick-glyph::before,
+.quick-glyph::after,
+.glyph-core,
+.glyph-core::before,
+.glyph-core::after {
+  content: "";
+  position: absolute;
+  box-sizing: border-box;
+}
+
+.quick-icon-record .glyph-core {
+  left: 5rpx;
+  top: 10rpx;
+  width: 32rpx;
+  height: 22rpx;
+  border-radius: 999rpx;
+  border: 6rpx solid currentColor;
+  border-left-width: 9rpx;
+  border-right-width: 9rpx;
+}
+.quick-icon-record .quick-glyph::before,
+.quick-icon-record .quick-glyph::after {
+  top: 7rpx;
+  width: 8rpx;
+  height: 28rpx;
+  border-radius: 8rpx;
+  background: currentColor;
+}
+.quick-icon-record .quick-glyph::before { left: 0; }
+.quick-icon-record .quick-glyph::after { right: 0; }
+
+.quick-icon-plan .glyph-core,
+.quick-icon-template .glyph-core,
+.quick-icon-history .glyph-core {
+  left: 7rpx;
+  top: 8rpx;
+  width: 28rpx;
+  height: 30rpx;
+  border: 4rpx solid currentColor;
+  border-radius: 8rpx;
+}
+.quick-icon-plan .glyph-core::before {
+  left: 4rpx;
+  right: 4rpx;
+  top: 8rpx;
+  height: 4rpx;
+  border-radius: 4rpx;
+  background: currentColor;
+  box-shadow: 0 9rpx 0 currentColor;
+}
+.quick-icon-plan .quick-glyph::before,
+.quick-icon-plan .quick-glyph::after {
+  top: 3rpx;
+  width: 5rpx;
+  height: 11rpx;
+  border-radius: 5rpx;
+  background: currentColor;
+}
+.quick-icon-plan .quick-glyph::before { left: 14rpx; }
+.quick-icon-plan .quick-glyph::after { right: 14rpx; }
+
+.quick-icon-exercise .glyph-core {
+  left: 10rpx;
+  top: 8rpx;
+  width: 22rpx;
+  height: 22rpx;
+  border: 5rpx solid currentColor;
+  border-radius: 999rpx;
+}
+.quick-icon-exercise .quick-glyph::before {
+  left: 4rpx;
+  bottom: 2rpx;
+  width: 12rpx;
+  height: 18rpx;
+  border-left: 5rpx solid currentColor;
+  border-bottom: 5rpx solid currentColor;
+  border-radius: 0 0 0 10rpx;
+}
+.quick-icon-exercise .quick-glyph::after {
+  right: 3rpx;
+  bottom: 3rpx;
+  width: 18rpx;
+  height: 11rpx;
+  border-right: 5rpx solid currentColor;
+  border-bottom: 5rpx solid currentColor;
+  border-radius: 0 0 10rpx 0;
+}
+
+.quick-icon-template .glyph-core {
+  transform: rotate(-5deg);
+}
+.quick-icon-template .glyph-core::before {
+  left: 6rpx;
+  top: 6rpx;
+  width: 16rpx;
+  height: 4rpx;
+  border-radius: 4rpx;
+  background: currentColor;
+  box-shadow: 0 8rpx 0 currentColor, 0 16rpx 0 currentColor;
+}
+.quick-icon-template .quick-glyph::after {
+  right: 4rpx;
+  top: 12rpx;
+  width: 9rpx;
+  height: 24rpx;
+  border-radius: 999rpx;
+  background: currentColor;
+  opacity: .38;
+}
+
+.quick-icon-history .glyph-core {
+  border-radius: 999rpx;
+}
+.quick-icon-history .glyph-core::before {
+  left: 12rpx;
+  top: 7rpx;
+  width: 4rpx;
+  height: 12rpx;
+  border-radius: 4rpx;
+  background: currentColor;
+}
+.quick-icon-history .glyph-core::after {
+  left: 14rpx;
+  top: 17rpx;
+  width: 11rpx;
+  height: 4rpx;
+  border-radius: 4rpx;
+  background: currentColor;
+  transform: rotate(25deg);
+}
+
+.quick-icon-chart .glyph-core {
+  left: 6rpx;
+  bottom: 5rpx;
+  width: 6rpx;
+  height: 18rpx;
+  border-radius: 6rpx;
+  background: currentColor;
+  box-shadow: 12rpx -8rpx 0 currentColor, 24rpx -15rpx 0 currentColor;
+}
+.quick-icon-chart .quick-glyph::before {
+  left: 4rpx;
+  bottom: 3rpx;
+  width: 36rpx;
+  height: 5rpx;
+  border-radius: 5rpx;
+  background: currentColor;
+  opacity: .32;
+}
+
+.quick-icon-body .glyph-core {
+  left: 14rpx;
+  top: 5rpx;
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 999rpx;
+  background: currentColor;
+}
+.quick-icon-body .glyph-core::before {
+  left: -9rpx;
+  top: 16rpx;
+  width: 32rpx;
+  height: 21rpx;
+  border-radius: 18rpx 18rpx 8rpx 8rpx;
+  border: 5rpx solid currentColor;
+  border-bottom-width: 0;
+}
+
+.quick-icon-diet .glyph-core {
+  left: 12rpx;
+  top: 11rpx;
+  width: 24rpx;
+  height: 20rpx;
+  border: 5rpx solid currentColor;
+  border-top-width: 0;
+  border-radius: 4rpx 4rpx 16rpx 16rpx;
+}
+.quick-icon-diet .quick-glyph::before {
+  left: 5rpx;
+  top: 5rpx;
+  width: 6rpx;
+  height: 28rpx;
+  border-radius: 6rpx;
+  background: currentColor;
+}
+.quick-icon-diet .quick-glyph::after {
+  right: 4rpx;
+  top: 6rpx;
+  width: 5rpx;
+  height: 30rpx;
+  border-radius: 999rpx;
+  background: currentColor;
+}
+
+.quick-icon-ai .glyph-core {
+  left: 6rpx;
+  top: 8rpx;
+  width: 30rpx;
+  height: 24rpx;
+  border: 4rpx solid currentColor;
+  border-radius: 12rpx;
+}
+.quick-icon-ai .glyph-core::before,
+.quick-icon-ai .glyph-core::after {
+  top: 8rpx;
+  width: 5rpx;
+  height: 5rpx;
+  border-radius: 999rpx;
+  background: currentColor;
+}
+.quick-icon-ai .glyph-core::before { left: 7rpx; }
+.quick-icon-ai .glyph-core::after { right: 7rpx; }
+.quick-icon-ai .quick-glyph::before {
+  left: 18rpx;
+  top: 1rpx;
+  width: 6rpx;
+  height: 9rpx;
+  border-radius: 6rpx;
+  background: currentColor;
+}
+
+.quick-icon-bell .glyph-core {
+  left: 10rpx;
+  top: 8rpx;
+  width: 22rpx;
+  height: 26rpx;
+  border: 5rpx solid currentColor;
+  border-bottom-width: 6rpx;
+  border-radius: 18rpx 18rpx 10rpx 10rpx;
+}
+.quick-icon-bell .glyph-core::after {
+  left: 7rpx;
+  bottom: -12rpx;
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 999rpx;
+  background: currentColor;
+}
+
+.quick-icon-profile .glyph-core {
+  left: 14rpx;
+  top: 8rpx;
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 999rpx;
+  background: currentColor;
+}
+.quick-icon-profile .glyph-core::before {
+  left: -8rpx;
+  top: 18rpx;
+  width: 30rpx;
+  height: 14rpx;
+  border-radius: 16rpx 16rpx 8rpx 8rpx;
+  background: currentColor;
 }
 
 .quick-label {
