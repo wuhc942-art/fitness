@@ -93,6 +93,11 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { aiPlanServiceLocal, type AiPlanForm, type AiPlanPreview, type PlanGoal, type PlanLevel, type PlanPlace } from '@/services/ai-plan.local'
+import { useMiniProgramShare } from '@/utils/share'
+
+useMiniProgramShare({
+  title: 'FitAI 健身记录：生成适合你的训练计划'
+})
 
 const goalOptions: { label: string; value: PlanGoal }[] = [
   { label: '增肌', value: 'muscle' },

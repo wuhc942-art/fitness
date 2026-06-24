@@ -208,6 +208,7 @@ import { BODY_PART_LABELS, LOCATION_LABELS } from '@/types/training'
 import { calculateActionVolume, updateActionCalculations } from '@/utils/calculator'
 import { getCurrentDate } from '@/utils/date'
 import { normalizeUsingTemplatePayload } from '@/utils/training-transfer'
+import { useMiniProgramShare } from '@/utils/share'
 import { trainingPlanServiceLocal } from '@/services/training-plan.local'
 import { trainingServiceLocal } from '@/services/training.local'
 import { templateServiceLocal } from '@/services/template.local'
@@ -221,6 +222,10 @@ type DraftAction = { name: string; sets: number | string; notes: string; setsDet
 type LibrarySource = 'local' | 'online'
 type LibraryActionOption = { name: string; bodyPart: ExerciseBodyPart; equipment: ExerciseEquipment; aliases?: string[] }
 type LastActionProfile = { date: string; action: ActionRecord }
+
+useMiniProgramShare({
+  title: 'FitAI 健身记录：快速记录今天训练'
+})
 
 const defaultActionNames = EXERCISE_LIBRARY.map((item) => item.name)
 const actionSuggestions = ref<string[]>(defaultActionNames)

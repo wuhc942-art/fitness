@@ -38,6 +38,11 @@
 import { ref, onMounted } from 'vue'
 import { trainingPlanServiceLocal } from '@/services/training-plan.local'
 import type { TrainingPlan } from '@/types/training-plan'
+import { useMiniProgramShare } from '@/utils/share'
+
+useMiniProgramShare({
+  title: 'FitAI 健身记录：调整训练计划'
+})
 
 const planId = ref<string>('')
 const plan = ref<TrainingPlan | null>(null)

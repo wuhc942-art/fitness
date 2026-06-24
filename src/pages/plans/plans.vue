@@ -168,8 +168,13 @@ import { ref, computed, onMounted } from 'vue'
 import type { PlanListItem, PlanCalendarDay, TrainingPlan } from '@/types/training-plan'
 import { trainingPlanServiceLocal } from '@/services/training-plan.local'
 import { onShow } from '@dcloudio/uni-app'
+import { useMiniProgramShare } from '@/utils/share'
 
 // Tab 切换
+useMiniProgramShare({
+  title: 'FitAI 健身记录：管理每周训练计划'
+})
+
 const currentTab = ref<'plans' | 'calendar'>('plans')
 
 // 计划列表

@@ -204,9 +204,14 @@ import { BODY_PART_OPTIONS, EQUIPMENT_LABELS, EXERCISE_LIBRARY, type ExerciseBod
 import { exerciseDbService, type ExerciseDbItem } from '@/services/exercisedb.local'
 import { translateExerciseName } from '@/utils/exercise-name-translate'
 import { hasLocalExerciseGif } from '@/services/exercise-media.local'
+import { useMiniProgramShare } from '@/utils/share'
 
 type LibrarySource = 'local' | 'online'
 type LibraryActionOption = { name: string; bodyPart: ExerciseBodyPart; equipment: ExerciseEquipment; aliases?: string[] }
+
+useMiniProgramShare({
+  title: 'FitAI 健身记录：复用你的训练模板'
+})
 
 const templates = ref<TrainingTemplate[]>([])
 const loading = ref(false)

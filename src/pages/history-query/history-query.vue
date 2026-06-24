@@ -110,8 +110,13 @@ import { onShow } from '@dcloudio/uni-app'
 import type { BodyPart, TrainingRecord } from '@/types/training'
 import { trainingServiceLocal } from '@/services/training.local'
 import { trainingPlanServiceLocal } from '@/services/training-plan.local'
+import { useMiniProgramShare } from '@/utils/share'
 
 type RangeValue = '7' | '30' | '90' | 'all'
+
+useMiniProgramShare({
+  title: 'FitAI 健身记录：复盘训练历史'
+})
 
 const bodyPartLabels: Record<BodyPart, string> = {
   chest: '胸',

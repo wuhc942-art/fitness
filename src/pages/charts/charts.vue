@@ -107,6 +107,11 @@ import { computed, onMounted, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { trainingServiceLocal } from '@/services/training.local'
 import { trainingAnalysisServiceLocal, type TrainingAnalysis } from '@/services/training-analysis.local'
+import { useMiniProgramShare } from '@/utils/share'
+
+useMiniProgramShare({
+  title: 'FitAI 健身记录：查看训练趋势'
+})
 
 const volumeData = ref<{ date: string; volume: number }[]>([])
 const frequencyData = ref<{ month: string; count: number }[]>([])

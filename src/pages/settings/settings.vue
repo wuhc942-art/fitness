@@ -100,6 +100,11 @@ import { computed, reactive, ref, onMounted } from 'vue'
 import { MISSED_TRAINING_TEMPLATE_ID, reminderServiceLocal, type LocalReminderSettings } from '@/services/reminder.local'
 import { normalizeBackupDataForImport } from '@/utils/backup-normalize'
 import { arrayBackupKeys, backupStorageKeys, buildBackupPreview, createBackupFileName, formatBackupPreview, readBackupStorage, type BackupStorageKey } from '@/utils/backup-data'
+import { useMiniProgramShare } from '@/utils/share'
+
+useMiniProgramShare({
+  title: 'FitAI 健身记录：本地数据可备份'
+})
 
 const settings = reactive<LocalReminderSettings>({
   dailyReminder: { enabled: false, time: '19:00' },

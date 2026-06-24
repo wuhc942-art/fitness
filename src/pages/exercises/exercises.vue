@@ -192,8 +192,13 @@ import { exerciseDbService, type ExerciseDbItem, type ExerciseDbSource } from '@
 import { translateExerciseName } from '@/utils/exercise-name-translate'
 import { hasExerciseGif, resolveExerciseGif } from '@/services/exercise-media.local'
 import { translateExerciseStep, translateExerciseTags } from '@/utils/exercise-content-translate'
+import { useMiniProgramShare } from '@/utils/share'
 
 type SourceMode = 'local' | 'online'
+
+useMiniProgramShare({
+  title: 'FitAI 动作库：查动作演示和训练提示'
+})
 
 const sourceMode = ref<SourceMode>('local')
 const keyword = ref('')

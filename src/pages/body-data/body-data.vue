@@ -147,6 +147,11 @@ import type { BodyDataForm, BodyDataRecord } from '@/types/body-data'
 import { getCurrentDate } from '@/utils/date'
 import { bodyDataServiceLocal } from '@/services/body-data.local'
 import { bodyProfileServiceLocal, type BodyProfile, type FitnessGoal, type Gender } from '@/services/body-profile.local'
+import { useMiniProgramShare } from '@/utils/share'
+
+useMiniProgramShare({
+  title: 'FitAI 健身记录：记录身体变化'
+})
 
 const genderOptions: { label: string; value: Gender }[] = [
   { label: '男', value: 'male' },

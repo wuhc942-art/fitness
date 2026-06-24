@@ -89,6 +89,11 @@ import type { DailySchedule, WeeklySchedule } from '@/types/training-plan'
 import type { TrainingTemplate } from '@/types/template'
 import { templateServiceLocal } from '@/services/template.local'
 import { trainingPlanServiceLocal } from '@/services/training-plan.local'
+import { useMiniProgramShare } from '@/utils/share'
+
+useMiniProgramShare({
+  title: 'FitAI 健身记录：创建训练计划'
+})
 
 const weekdayOptions = [
   { value: 1, label: '周一' },

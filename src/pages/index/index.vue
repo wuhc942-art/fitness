@@ -114,6 +114,7 @@
 import { computed, ref } from 'vue'
 import { onMounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
+import { useMiniProgramShare } from '@/utils/share'
 import type { HomeStatistics } from '@/types'
 import { statisticsServiceLocal } from '@/services/statistics.local'
 import { trainingPlanServiceLocal } from '@/services/training-plan.local'
@@ -145,6 +146,10 @@ const growthProfile = ref<GrowthProfile>({
     { label: '稳定', value: 8 },
     { label: '恢复', value: 72 }
   ]
+})
+
+useMiniProgramShare({
+  title: 'FitAI 健身记录：训练、计划和进步复盘'
 })
 
 const quickActions = [

@@ -104,6 +104,11 @@ import { computed, reactive, ref, onMounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { dietServiceLocal, type DietAnalysis, type DietRecord, type MealType } from '@/services/diet.local'
 import { bodyProfileServiceLocal, type FitnessGoal } from '@/services/body-profile.local'
+import { useMiniProgramShare } from '@/utils/share'
+
+useMiniProgramShare({
+  title: 'FitAI 健身记录：训练饮食建议'
+})
 
 const emptyRecord: DietRecord = {
   _id: '',

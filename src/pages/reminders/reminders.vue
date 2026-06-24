@@ -104,6 +104,11 @@ import { computed, reactive, ref, onMounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { MISSED_TRAINING_TEMPLATE_ID, reminderServiceLocal, type LocalReminderSettings } from '@/services/reminder.local'
 import type { MissedPlanSession } from '@/services/training-plan.local'
+import { useMiniProgramShare } from '@/utils/share'
+
+useMiniProgramShare({
+  title: 'FitAI 健身记录：别漏掉计划训练'
+})
 
 const settings = reactive<LocalReminderSettings>({
   dailyReminder: { enabled: false, time: '19:00' },

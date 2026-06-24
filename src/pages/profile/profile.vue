@@ -101,6 +101,11 @@
 import { computed, reactive, ref, onMounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { userServiceLocal, type UserGrowth, type UserProfile } from '@/services/user.local'
+import { useMiniProgramShare } from '@/utils/share'
+
+useMiniProgramShare({
+  title: 'FitAI 健身记录：查看训练成长档案'
+})
 
 const profile = reactive<UserProfile>({
   nickname: 'FitAI 用户',

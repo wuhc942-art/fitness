@@ -391,6 +391,40 @@ Copied output:
 D:\dist-upload-home-ai-v1
 ```
 
+### 0j. Mini program share support
+
+Added explicit WeChat mini program sharing support after the user reported that the app could not be shared despite WeChat certification and filing being approved.
+
+Files changed:
+
+```text
+src/utils/share.ts
+src/pages/*/*.vue
+src/pages/plans/*.vue
+```
+
+Important behavior:
+
+- added a shared `useMiniProgramShare(...)` utility
+- utility registers `onShareAppMessage` for WeChat friend/group sharing
+- utility registers `onShareTimeline` for timeline sharing
+- utility calls `uni.showShareMenu` with friend and timeline menus when pages are shown
+- all main package pages now opt into sharing with page-appropriate titles
+- share path intentionally points to `/pages/index/index` to avoid leaking unsaved form/detail state
+
+Verification for this round:
+
+```text
+npm run type-check passed
+npm run build:mp-weixin passed
+```
+
+Copied output:
+
+```text
+D:\dist-upload-home-ai-v1
+```
+
 ### 1. Product context and design workflow files
 
 Added:
