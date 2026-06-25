@@ -46,13 +46,14 @@ const payload = buildSubscribePayload({
   templateId: 'template_123',
   page: 'pages/index/index',
   message: messages[0],
-  today
+  today,
+  lastTrainingDate: '2026-06-20'
 })
 
 assert(payload.touser === 'openid_1', 'payload should include recipient openid')
 assert(payload.templateId === 'template_123', 'payload should include template id')
-assert(payload.data.thing1.value.length <= 20, 'thing1 should fit WeChat thing field limit')
-assert(payload.data.thing2.value.length <= 20, 'thing2 should fit WeChat thing field limit')
-assert(payload.data.date3.value === today, 'date3 should include send date')
+assert(payload.data.thing3.value.length <= 20, 'thing3 should fit 温馨提示 thing field limit')
+assert(payload.data.time1.value === '2026-06-20', 'time1 should use last training date')
+assert(!payload.data.thing1 && !payload.data.thing2 && !payload.data.date3, 'payload should only use fields configured by the selected template')
 
 console.log('notification rules assertions passed')

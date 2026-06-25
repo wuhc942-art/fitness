@@ -136,7 +136,8 @@ async function sendForUser(settings: ReminderSettingsDoc, today: string) {
         templateId,
         page: 'pages/index/index',
         message,
-        today
+        today,
+        lastTrainingDate
       }))
       await markDelivery(settings._id, message, today, 'sent')
       sent += 1

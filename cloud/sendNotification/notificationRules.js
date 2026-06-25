@@ -41,14 +41,14 @@ function buildReminderMessages(options) {
 }
 
 function buildSubscribePayload(options) {
+  const lastRecordDate = options.lastTrainingDate || options.today
   return {
     touser: options.openid,
     templateId: options.templateId,
     page: options.page || 'pages/index/index',
     data: {
-      thing1: { value: clampText(options.message.title, 20) },
-      thing2: { value: clampText(options.message.content, 20) },
-      date3: { value: options.today }
+      thing3: { value: clampText(options.message.content, 20) },
+      time1: { value: lastRecordDate }
     }
   }
 }
