@@ -19,8 +19,8 @@
         <text class="summary-label">逾期提醒</text>
       </view>
       <view class="summary-item">
-        <text class="summary-value">{{ settings.missedPlanReminder.subscribed ? '已授权' : '待授权' }}</text>
-        <text class="summary-label">订阅授权</text>
+        <text class="summary-value">{{ deliverySummary }}</text>
+        <text class="summary-label">离线提醒</text>
       </view>
     </view>
 
@@ -59,10 +59,10 @@
       <view class="panel-head compact">
         <view>
           <text class="panel-title">微信订阅授权</text>
-          <text class="panel-desc">授权只代表微信允许后续发送；当前版本先在打开小程序时检查漏练。</text>
+          <text class="panel-desc">授权并同步云端后，定时云函数才可以尝试发送微信服务通知。</text>
         </view>
-        <text class="status-pill" :class="{ active: settings.missedPlanReminder.subscribed }">
-          {{ settings.missedPlanReminder.subscribed ? '已授权' : '待授权' }}
+        <text class="status-pill" :class="{ active: canOfflineNotify, warn: settings.cloudSync?.status === 'failed' }">
+          {{ deliveryStatusText }}
         </text>
       </view>
 
@@ -74,7 +74,7 @@
       <button class="subscribe-btn" :disabled="isSubscribing" @click="requestSubscribe">
         {{ isSubscribing ? '申请中...' : (settings.missedPlanReminder.subscribed ? '重新申请授权' : '申请微信订阅授权') }}
       </button>
-      <text class="fine-print">授权成功后不会自动定时弹消息；离线服务通知需要云函数按 openid 调用订阅消息发送接口。</text>
+      <text class="fine-print">{{ deliveryHint }}</text>
     </view>
 
     <view class="panel">
@@ -132,6 +132,26 @@ const shortTemplateId = computed(() => {
   return `${id.slice(0, 8)}…${id.slice(-8)}`
 })
 
+const canOfflineNotify = computed(() => settings.missedPlanReminder.subscribed && settings.cloudSync?.status === 'synced')
+
+const deliverySummary = computed(() => {
+  if (canOfflineNotify.value) return '可离线'
+  if (settings.missedPlanReminder.subscribed) return settings.cloudSync?.status === 'failed' ? '需同步' : '已授权'
+  return '待授权'
+})
+
+const deliveryStatusText = computed(() => {
+  if (canOfflineNotify.value) return '云端已同步'
+  if (settings.cloudSync?.status === 'failed') return '同步失败'
+  return settings.missedPlanReminder.subscribed ? '已授权' : '待授权'
+})
+
+const deliveryHint = computed(() => {
+  if (canOfflineNotify.value) return '云端已保存提醒设置；若订阅额度用完，微信可能要求你重新授权。'
+  if (settings.cloudSync?.status === 'failed') return `本地设置已保存，但云端同步失败：${settings.cloudSync.error || '请稍后重试'}`
+  return '授权成功后会同步到云端；定时云函数会按训练记录判断是否发送。'
+})
+
 const load = async () => {
   const saved = await reminderServiceLocal.getSettings()
   Object.assign(settings, saved)
@@ -143,7 +163,8 @@ const saveSettings = async () => {
   if (isSaving.value) return
   try {
     isSaving.value = true
-    await reminderServiceLocal.saveSettings(settings)
+    const saved = await reminderServiceLocal.saveSettings(settings)
+    Object.assign(settings, saved)
     uni.showToast({ title: '已保存', icon: 'success' })
   } catch (error: any) {
     uni.showToast({ title: error?.message || '保存失败', icon: 'none' })
@@ -156,7 +177,8 @@ const checkNow = async () => {
   if (isChecking.value) return
   try {
     isChecking.value = true
-    await reminderServiceLocal.saveSettings(settings)
+    const saved = await reminderServiceLocal.saveSettings(settings)
+    Object.assign(settings, saved)
     missedSessions.value = await reminderServiceLocal.getMissedSessions()
     uni.showToast({
       title: missedSessions.value.length ? `发现 ${missedSessions.value.length} 条待补记` : '没有漏练计划',
@@ -176,7 +198,8 @@ const requestSubscribe = async () => {
     const accepted = await reminderServiceLocal.requestMissedPlanSubscribe(settings.missedPlanReminder.templateId)
     settings.missedPlanReminder.subscribed = accepted
     settings.missedPlanReminder.templateId = settings.missedPlanReminder.templateId || MISSED_TRAINING_TEMPLATE_ID
-    await reminderServiceLocal.saveSettings(settings)
+    const saved = await reminderServiceLocal.saveSettings(settings)
+    Object.assign(settings, saved)
     uni.showToast({ title: accepted ? '授权已记录' : '未授权订阅', icon: 'none' })
   } catch (error: any) {
     uni.showToast({ title: error?.message || '订阅失败', icon: 'none' })
@@ -249,6 +272,7 @@ onShow(() => {
 .subscribe-panel { border: 2rpx solid rgba(34,197,94,.28); }
 .status-pill { flex-shrink: 0; padding: 8rpx 16rpx; border-radius: 999rpx; background: #edf2f7; color: #4a5568; font-size: 22rpx; font-weight: 800; }
 .status-pill.active { background: #dcfce7; color: #166534; }
+.status-pill.warn { background: #fff7ed; color: #c2410c; }
 .template-box { margin-top: 16rpx; padding: 18rpx 20rpx; border-radius: 12rpx; background: #f8fafc; }
 .template-id { display: block; margin-top: 6rpx; color: #101820; font-size: 26rpx; font-weight: 800; }
 .subscribe-btn { margin-top: 18rpx; height: 80rpx; line-height: 80rpx; border-radius: 40rpx; background: #22c55e; color: #101820; font-size: 28rpx; font-weight: 900; }

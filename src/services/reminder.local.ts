@@ -19,6 +19,11 @@ export interface LocalReminderSettings {
     subscribed: boolean
     subscribedAt?: string
   }
+  cloudSync?: {
+    status: 'idle' | 'synced' | 'failed'
+    syncedAt?: string
+    error?: string
+  }
   updatedAt: string
 }
 
@@ -30,8 +35,26 @@ const defaultSettings = (): LocalReminderSettings => ({
     templateId: MISSED_TRAINING_TEMPLATE_ID,
     subscribed: false
   },
+  cloudSync: { status: 'idle' },
   updatedAt: new Date().toISOString()
 })
+
+let cloudInitialized = false
+
+function getCloudApi() {
+  const wxApi = typeof wx !== 'undefined' ? wx : undefined
+  return wxApi?.cloud
+}
+
+function ensureCloudReady() {
+  const cloud = getCloudApi()
+  if (!cloud) throw new Error('当前环境不支持云开发')
+  if (!cloudInitialized) {
+    cloud.init({ traceUser: true })
+    cloudInitialized = true
+  }
+  return cloud
+}
 
 function readSettings(): LocalReminderSettings {
   try {
@@ -49,7 +72,8 @@ function readSettings(): LocalReminderSettings {
         ...defaults.missedPlanReminder,
         ...(saved.missedPlanReminder || {}),
         templateId: saved.missedPlanReminder?.templateId || MISSED_TRAINING_TEMPLATE_ID
-      }
+      },
+      cloudSync: { ...defaults.cloudSync, ...(saved.cloudSync || {}) }
     }
   } catch (error) {
     console.error('读取提醒设置失败:', error)
@@ -59,6 +83,41 @@ function readSettings(): LocalReminderSettings {
 
 function writeSettings(settings: LocalReminderSettings) {
   uni.setStorageSync(STORAGE_KEY, JSON.stringify({ ...settings, updatedAt: new Date().toISOString() }))
+}
+
+async function syncSettingsToCloud(settings: LocalReminderSettings): Promise<LocalReminderSettings> {
+  const now = new Date().toISOString()
+  const next: LocalReminderSettings = {
+    ...settings,
+    cloudSync: { status: 'idle', syncedAt: settings.cloudSync?.syncedAt, error: '' },
+    updatedAt: now
+  }
+
+  try {
+    const cloud = ensureCloudReady()
+    const result = await cloud.callFunction({
+      name: 'saveReminderSettings',
+      data: {
+        settings: {
+          dailyReminder: next.dailyReminder,
+          threeDayReminder: next.threeDayReminder,
+          missedPlanReminder: next.missedPlanReminder,
+          updatedAt: now
+        }
+      }
+    })
+    if (result?.result?.success === false) throw new Error(result.result.error || '云端同步失败')
+    next.cloudSync = { status: 'synced', syncedAt: new Date().toISOString(), error: '' }
+  } catch (error: any) {
+    next.cloudSync = {
+      status: 'failed',
+      syncedAt: settings.cloudSync?.syncedAt,
+      error: error?.message || '云端同步失败'
+    }
+  }
+
+  writeSettings(next)
+  return next
 }
 
 function buildRecordUrl(session: MissedPlanSession) {
@@ -80,7 +139,7 @@ export const reminderServiceLocal = {
       updatedAt: new Date().toISOString()
     }
     writeSettings(next)
-    return next
+    return syncSettingsToCloud(next)
   },
 
   async requestMissedPlanSubscribe(templateId = MISSED_TRAINING_TEMPLATE_ID): Promise<boolean> {
@@ -95,11 +154,15 @@ export const reminderServiceLocal = {
           settings.missedPlanReminder.subscribed = accepted
           if (accepted) settings.missedPlanReminder.subscribedAt = new Date().toISOString()
           writeSettings(settings)
-          resolve(accepted)
+          syncSettingsToCloud(settings).finally(() => resolve(accepted))
         },
         fail: reject
       })
     })
+  },
+
+  async syncSettingsToCloud(): Promise<LocalReminderSettings> {
+    return syncSettingsToCloud(readSettings())
   },
 
   async getMissedSessions(): Promise<MissedPlanSession[]> {

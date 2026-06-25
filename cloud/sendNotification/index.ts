@@ -1,11 +1,16 @@
 /**
- * 云函数：发送提醒推送
- * 
- * 定时触发器调用，发送训练提醒
- * 定时配置：每天 19:00 触发
+ * 云函数：发送训练提醒订阅消息
+ *
+ * 定时触发器调用。前端负责申请订阅授权并保存 reminder_settings；
+ * 这里负责扫描已授权用户，按规则发送微信订阅消息，并记录同日去重状态。
  */
 
 import cloud = require('wx-server-sdk')
+
+const {
+  buildReminderMessages,
+  buildSubscribePayload
+} = require('./notificationRules')
 
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
@@ -13,165 +18,175 @@ cloud.init({
 
 const db = cloud.database()
 
-/**
- * 主函数（定时触发器入口）
- */
-exports.main = async (event: any, context: any) => {
-  try {
-    const { OPENID } = context
-    
-    // 获取用户的提醒设置
-    const settingsResult = await db.collection('reminder_settings')
-      .where({
-        _openid: OPENID
-      })
-      .get()
-    
-    if (settingsResult.data.length === 0) {
-      return {
-        success: true,
-        message: '未设置提醒'
-      }
-    }
-    
-    const settings = settingsResult.data[0]
-    const today = new Date().toISOString().split('T')[0]
-    
-    // 获取今日训练记录
-    const todayTraining = await db.collection('training_records')
-      .where({
-        _openid: OPENID,
-        date: today
-      })
-      .get()
-    
-    // 获取最后训练日期
-    const lastTraining = await db.collection('training_records')
-      .where({
-        _openid: OPENID
-      })
-      .orderBy('date', 'desc')
-      .limit(1)
-      .get()
-    
-    const messages: string[] = []
-    
-    // 每日提醒
-    if (settings.dailyReminder?.enabled) {
-      if (todayTraining.data.length === 0) {
-        messages.push('今日还未训练，加油！💪')
-      }
-    }
-    
-    // 三天未训练提醒
-    if (settings.threeDayReminder?.enabled && lastTraining.data.length > 0) {
-      const lastDate = new Date(lastTraining.data[0].date)
-      const now = new Date()
-      const diffDays = Math.floor((now.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24))
-      
-      if (diffDays >= 3) {
-        messages.push(`已经${diffDays}天没有训练了，快行动起来！🏋️`)
-      }
-    }
-    
-    // 部位提醒（智能推荐）
-    if (settings.bodyPartReminder?.enabled) {
-      const recommendedPart = await getRecommendedBodyPart(OPENID)
-      if (recommendedPart) {
-        messages.push(`今日推荐训练：${recommendedPart} 🔥`)
-      }
-    }
-    
-    // 发送推送消息
-    if (messages.length > 0) {
-      // 注意：实际部署时需要配置订阅消息
-      // 这里仅作为示例，实际推送需要用户订阅消息模板
-      console.log('推送消息:', messages.join('\n'))
-      
-      // 如果有订阅消息模板，可以调用 sendSubscribeMessage
-      // await cloud.openapi.subscribeMessage.send({
-      //   touser: OPENID,
-      //   templateId: 'YOUR_TEMPLATE_ID',
-      //   page: 'pages/index/index',
-      //   data: {
-      //     thing1: { value: messages.join('\n') }
-      //   }
-      // })
-    }
-    
-    return {
-      success: true,
-      message: messages.length > 0 ? messages.join('\n') : '无提醒消息'
-    }
-  } catch (err) {
-    console.error('Send notification error:', err)
-    return {
-      success: false,
-      error: err.message
-    }
-  }
+interface ReminderMessage {
+  type: 'daily' | 'threeDay'
+  title: string
+  content: string
 }
 
-/**
- * 智能推荐训练部位
- * 基于历史训练频率和用户习惯推荐
- */
-async function getRecommendedBodyPart(OPENID: string): Promise<string | null> {
-  // 获取最近 30 天的训练记录
-  const thirtyDaysAgo = new Date()
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-  
-  const recordsResult = await db.collection('training_records')
+interface ReminderSettingsDoc {
+  _id: string
+  _openid: string
+  dailyReminder?: {
+    enabled?: boolean
+    time?: string
+  }
+  threeDayReminder?: {
+    enabled?: boolean
+  }
+  missedPlanReminder?: {
+    enabled?: boolean
+    subscribed?: boolean
+    templateId?: string
+  }
+  deliveryState?: Record<string, any>
+}
+
+function getChinaDate() {
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Shanghai',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  })
+  return formatter.format(new Date())
+}
+
+async function fetchSubscribedSettings(): Promise<ReminderSettingsDoc[]> {
+  const result = await db.collection('reminder_settings')
     .where({
-      _openid: OPENID,
-      date: _.gte(thirtyDaysAgo.toISOString().split('T')[0])
+      'missedPlanReminder.subscribed': true
+    })
+    .limit(1000)
+    .get()
+
+  return result.data as ReminderSettingsDoc[]
+}
+
+async function getTodayTrainingCount(openid: string, today: string) {
+  const result = await db.collection('training_records')
+    .where({
+      _openid: openid,
+      date: today
     })
     .get()
-  
-  const records = recordsResult.data
-  
-  if (records.length === 0) {
-    return null
-  }
-  
-  // 统计各部位训练次数
-  const partCount: { [key: string]: number } = {
-    chest: 0,
-    back: 0,
-    legs: 0,
-    shoulders: 0,
-    arms: 0,
-    cardio: 0
-  }
-  
-  records.forEach(record => {
-    if (record.bodyPart && partCount.hasOwnProperty(record.bodyPart)) {
-      partCount[record.bodyPart]++
-    }
-  })
-  
-  // 找出训练次数最少的部位
-  const partLabels: { [key: string]: string } = {
-    chest: '胸',
-    back: '背',
-    legs: '腿',
-    shoulders: '肩',
-    arms: '手臂',
-    cardio: '有氧'
-  }
-  
-  let minPart = ''
-  let minCount = Infinity
-  
-  for (const [part, count] of Object.entries(partCount)) {
-    if (count < minCount) {
-      minCount = count
-      minPart = part
-    }
-  }
-  
-  return minPart ? partLabels[minPart] : null
+
+  return result.data.length
 }
 
-// 引入命令式 API 用于条件查询
-const _ = db.command
+async function getLastTrainingDate(openid: string) {
+  const result = await db.collection('training_records')
+    .where({
+      _openid: openid
+    })
+    .orderBy('date', 'desc')
+    .limit(1)
+    .get()
+
+  return result.data[0]?.date || ''
+}
+
+async function markDelivery(settingsId: string, message: ReminderMessage, today: string, status: 'sent' | 'failed', error?: string) {
+  const now = new Date().toISOString()
+  const deliveryState = status === 'sent'
+    ? {
+        lastSentDate: today,
+        lastAttemptDate: today,
+        lastAttemptAt: now,
+        lastStatus: status,
+        lastError: ''
+      }
+    : {
+        lastAttemptDate: today,
+        lastAttemptAt: now,
+        lastStatus: status,
+        lastError: error || ''
+      }
+
+  await db.collection('reminder_settings').doc(settingsId).update({
+    data: {
+      [`deliveryState.${message.type}`]: deliveryState,
+      updatedAt: now
+    }
+  })
+}
+
+async function sendForUser(settings: ReminderSettingsDoc, today: string) {
+  const templateId = settings.missedPlanReminder?.templateId
+  if (!settings._openid || !templateId) {
+    return { openid: settings._openid || '', sent: 0, failed: 0, skipped: 'missing_openid_or_template' }
+  }
+
+  const todayTrainingCount = await getTodayTrainingCount(settings._openid, today)
+  const lastTrainingDate = await getLastTrainingDate(settings._openid)
+  const messages: ReminderMessage[] = buildReminderMessages({
+    settings,
+    today,
+    todayTrainingCount,
+    lastTrainingDate
+  })
+
+  let sent = 0
+  let failed = 0
+
+  for (const message of messages) {
+    try {
+      await cloud.openapi.subscribeMessage.send(buildSubscribePayload({
+        openid: settings._openid,
+        templateId,
+        page: 'pages/index/index',
+        message,
+        today
+      }))
+      await markDelivery(settings._id, message, today, 'sent')
+      sent += 1
+    } catch (error: any) {
+      failed += 1
+      await markDelivery(settings._id, message, today, 'failed', error?.errMsg || error?.message || String(error))
+    }
+  }
+
+  return { openid: settings._openid, sent, failed, skipped: messages.length ? '' : 'no_message' }
+}
+
+exports.main = async () => {
+  const today = getChinaDate()
+
+  try {
+    const settingsList = await fetchSubscribedSettings()
+    const results = []
+
+    for (const settings of settingsList) {
+      try {
+        results.push(await sendForUser(settings, today))
+      } catch (error: any) {
+        results.push({
+          openid: settings._openid || '',
+          sent: 0,
+          failed: 1,
+          skipped: 'user_failed',
+          error: error?.message || String(error)
+        })
+      }
+    }
+
+    const sent = results.reduce((sum, item) => sum + item.sent, 0)
+    const failed = results.reduce((sum, item) => sum + item.failed, 0)
+
+    return {
+      success: true,
+      today,
+      checkedUsers: settingsList.length,
+      sent,
+      failed,
+      results
+    }
+  } catch (error: any) {
+    console.error('Send notification error:', error)
+    return {
+      success: false,
+      today,
+      error: error?.message || String(error)
+    }
+  }
+}

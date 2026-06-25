@@ -16,12 +16,12 @@
 
       <view v-if="settings.missedPlanReminder.enabled" class="subscribe-box">
         <text class="setting-title">微信订阅授权</text>
-        <text class="setting-desc">授权后才有资格发服务通知；当前版本先在打开小程序时检查漏练。</text>
+        <text class="setting-desc">授权并同步云端后，定时云函数才可以尝试发送微信服务通知。</text>
         <text class="template-id">{{ shortTemplateId }}</text>
         <button class="secondary-btn" :disabled="isSubscribing" @click="requestSubscribe">
           {{ isSubscribing ? '申请中...' : '申请微信订阅授权' }}
         </button>
-        <text class="subscribe-state">{{ subscribeStateText }}</text>
+        <text class="subscribe-state" :class="{ ok: canOfflineNotify, warn: settings.cloudSync?.status === 'failed' }">{{ subscribeStateText }}</text>
       </view>
 
       <view class="setting-row">
@@ -163,8 +163,11 @@ interface WxBackupApi {
 const wxBackupApi = wx as unknown as WxBackupApi
 
 const subscribeStateText = computed(() => {
-  return settings.missedPlanReminder.subscribed ? '已获得授权，但离线推送还需云函数发送。' : '还未申请订阅授权。'
+  if (canOfflineNotify.value) return '已授权并同步云端，可尝试离线提醒。'
+  if (settings.cloudSync?.status === 'failed') return `已保存本地设置，云端同步失败：${settings.cloudSync.error || '请稍后重试'}`
+  return settings.missedPlanReminder.subscribed ? '已获得授权，等待云端同步。' : '还未申请订阅授权。'
 })
+const canOfflineNotify = computed(() => settings.missedPlanReminder.subscribed && settings.cloudSync?.status === 'synced')
 const shortTemplateId = computed(() => {
   const id = settings.missedPlanReminder.templateId || MISSED_TRAINING_TEMPLATE_ID
   return `${id.slice(0, 8)}…${id.slice(-8)}`
@@ -198,7 +201,8 @@ const saveSettings = async () => {
   try {
     isSaving.value = true
     uni.showLoading({ title: '保存中' })
-    await reminderServiceLocal.saveSettings(settings)
+    const saved = await reminderServiceLocal.saveSettings(settings)
+    Object.assign(settings, saved)
     uni.hideLoading()
     uni.showToast({ title: '保存成功', icon: 'success' })
   } catch (error) {
@@ -216,7 +220,8 @@ const requestSubscribe = async () => {
     isSubscribing.value = true
     const accepted = await reminderServiceLocal.requestMissedPlanSubscribe(settings.missedPlanReminder.templateId)
     settings.missedPlanReminder.subscribed = accepted
-    await reminderServiceLocal.saveSettings(settings)
+    const saved = await reminderServiceLocal.saveSettings(settings)
+    Object.assign(settings, saved)
     uni.showToast({ title: accepted ? '授权已记录' : '未授权订阅', icon: 'none' })
   } catch (error: any) {
     uni.showToast({ title: error?.message || '订阅失败', icon: 'none' })
@@ -396,6 +401,8 @@ onMounted(loadSettings)
 .secondary-btn { margin-top: 16rpx; height: 72rpx; line-height: 72rpx; border-radius: 36rpx; background: #edf2f7; color: #101820; font-size: 26rpx; font-weight: 800; }
 .secondary-btn[disabled], .save-btn[disabled], .action-row.busy { opacity: .65; }
 .subscribe-state { display: block; margin-top: 12rpx; color: #718096; font-size: 22rpx; }
+.subscribe-state.ok { color: #166534; }
+.subscribe-state.warn { color: #c2410c; }
 .time-picker { min-width: 150rpx; padding: 14rpx 20rpx; border-radius: 10rpx; background: #f8fafc; color: #101820; font-size: 26rpx; text-align: center; }
 .arrow { color: #a0aec0; font-size: 40rpx; line-height: 1; }
 .danger .setting-title { color: #dc2626; }

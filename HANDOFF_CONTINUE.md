@@ -729,6 +729,14 @@ Note:
 
 - `robocopy` exit code `1` is acceptable; it means files copied.
 
+
+## Reminder Offline Push Progress
+
+- Frontend reminder settings now try to sync to cloud through `saveReminderSettings` after saving or subscription authorization. Local reminders continue working if cloud sync fails.
+- `sendNotification` now scans subscribed `reminder_settings`, builds at most one reminder per user per timer run, sends through `cloud.openapi.subscribeMessage.send`, and records per-day delivery state for de-duplication.
+- Current cloud template data uses `thing1`, `thing2`, and `date3`. Confirm the WeChat subscription template fields match these names before production deployment.
+- Real offline push still requires deploying cloud functions and ensuring users have valid subscription quota; one-time subscription messages may need re-authorization after being consumed.
+
 ## Known Constraints / Notes
 
 - `git` may not be available in PATH in this environment.
