@@ -15,11 +15,11 @@
       </view>
 
       <view v-if="settings.missedPlanReminder.enabled" class="subscribe-box">
-        <text class="setting-title">微信弹消息</text>
-        <text class="setting-desc">订阅模板已配置。真正离线推送需要后续接云函数定时发送。</text>
+        <text class="setting-title">微信订阅授权</text>
+        <text class="setting-desc">授权后才有资格发服务通知；当前版本先在打开小程序时检查漏练。</text>
         <text class="template-id">{{ shortTemplateId }}</text>
         <button class="secondary-btn" :disabled="isSubscribing" @click="requestSubscribe">
-          {{ isSubscribing ? '申请中...' : '申请微信订阅提醒' }}
+          {{ isSubscribing ? '申请中...' : '申请微信订阅授权' }}
         </button>
         <text class="subscribe-state">{{ subscribeStateText }}</text>
       </view>
@@ -27,7 +27,7 @@
       <view class="setting-row">
         <view class="setting-copy">
           <text class="setting-title">训练时间提醒</text>
-          <text class="setting-desc">保存常用训练时间，后续可接入订阅消息</text>
+          <text class="setting-desc">保存常用训练时间；离线推送需要云函数定时发送</text>
         </view>
         <switch :checked="settings.dailyReminder.enabled" color="#101820" @change="onDailyReminderChange" />
       </view>
@@ -163,7 +163,7 @@ interface WxBackupApi {
 const wxBackupApi = wx as unknown as WxBackupApi
 
 const subscribeStateText = computed(() => {
-  return settings.missedPlanReminder.subscribed ? '已获得微信订阅授权。' : '还未申请订阅授权。'
+  return settings.missedPlanReminder.subscribed ? '已获得授权，但离线推送还需云函数发送。' : '还未申请订阅授权。'
 })
 const shortTemplateId = computed(() => {
   const id = settings.missedPlanReminder.templateId || MISSED_TRAINING_TEMPLATE_ID
@@ -217,7 +217,7 @@ const requestSubscribe = async () => {
     const accepted = await reminderServiceLocal.requestMissedPlanSubscribe(settings.missedPlanReminder.templateId)
     settings.missedPlanReminder.subscribed = accepted
     await reminderServiceLocal.saveSettings(settings)
-    uni.showToast({ title: accepted ? '订阅成功' : '未授权订阅', icon: 'none' })
+    uni.showToast({ title: accepted ? '授权已记录' : '未授权订阅', icon: 'none' })
   } catch (error: any) {
     uni.showToast({ title: error?.message || '订阅失败', icon: 'none' })
   } finally {

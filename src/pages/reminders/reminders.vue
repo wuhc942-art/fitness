@@ -19,8 +19,8 @@
         <text class="summary-label">逾期提醒</text>
       </view>
       <view class="summary-item">
-        <text class="summary-value">{{ settings.missedPlanReminder.subscribed ? '已开' : '未开' }}</text>
-        <text class="summary-label">微信订阅</text>
+        <text class="summary-value">{{ settings.missedPlanReminder.subscribed ? '已授权' : '待授权' }}</text>
+        <text class="summary-label">订阅授权</text>
       </view>
     </view>
 
@@ -58,8 +58,8 @@
     <view class="panel subscribe-panel">
       <view class="panel-head compact">
         <view>
-          <text class="panel-title">微信消息提醒</text>
-          <text class="panel-desc">模板 ID 已配置，可直接申请授权。</text>
+          <text class="panel-title">微信订阅授权</text>
+          <text class="panel-desc">授权只代表微信允许后续发送；当前版本先在打开小程序时检查漏练。</text>
         </view>
         <text class="status-pill" :class="{ active: settings.missedPlanReminder.subscribed }">
           {{ settings.missedPlanReminder.subscribed ? '已授权' : '待授权' }}
@@ -72,9 +72,9 @@
       </view>
 
       <button class="subscribe-btn" :disabled="isSubscribing" @click="requestSubscribe">
-        {{ isSubscribing ? '申请中...' : (settings.missedPlanReminder.subscribed ? '重新申请授权' : '开启微信提醒') }}
+        {{ isSubscribing ? '申请中...' : (settings.missedPlanReminder.subscribed ? '重新申请授权' : '申请微信订阅授权') }}
       </button>
-      <text class="fine-print">微信要求用户主动授权；真正离线推送还需要后续接云函数定时发送。</text>
+      <text class="fine-print">授权成功后不会自动定时弹消息；离线服务通知需要云函数按 openid 调用订阅消息发送接口。</text>
     </view>
 
     <view class="panel">
@@ -124,7 +124,7 @@ const activeSessionKey = ref('')
 
 const heroSubtitle = computed(() => {
   if (missedSessions.value.length) return '建议先补记最近一次训练，计划进度会自动跟上。'
-  return settings.missedPlanReminder.subscribed ? '微信订阅已授权，打开小程序也会检查漏练。' : '可以开启微信订阅，让提醒能力更完整。'
+  return settings.missedPlanReminder.subscribed ? '订阅授权已记录，当前仍以打开小程序时检查漏练为主。' : '先开启本地检查；微信订阅授权可为后续离线推送做准备。'
 })
 
 const shortTemplateId = computed(() => {
@@ -177,7 +177,7 @@ const requestSubscribe = async () => {
     settings.missedPlanReminder.subscribed = accepted
     settings.missedPlanReminder.templateId = settings.missedPlanReminder.templateId || MISSED_TRAINING_TEMPLATE_ID
     await reminderServiceLocal.saveSettings(settings)
-    uni.showToast({ title: accepted ? '订阅成功' : '未授权订阅', icon: 'none' })
+    uni.showToast({ title: accepted ? '授权已记录' : '未授权订阅', icon: 'none' })
   } catch (error: any) {
     uni.showToast({ title: error?.message || '订阅失败', icon: 'none' })
   } finally {

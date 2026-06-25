@@ -737,6 +737,7 @@ Note:
 - Avoid adding image/GIF/media assets to the main package.
 - ExerciseDB online source remains optional and may rate-limit.
 - WeChat legal domain issues may still exist for `https://oss.exercisedb.dev`.
+- Reminder subscription is currently authorization plus local in-app checking only. Real offline WeChat service notifications still need cloud-side openid/settings/record sync and timed `subscribeMessage.send`; do not label the current state as fully enabled offline push.
 
 ## Good Next Work
 
@@ -758,7 +759,13 @@ Recommended next internal-code/data consistency improvements:
 4. Improve statistics consistency:
    - centralize best-set / PR calculation logic so home, history, and statistics use the same rules
 
-5. Keep running:
+5. Implement real offline reminder push:
+   - persist user openid and reminder settings to cloud
+   - sync the training records/plan completion state needed by the timer
+   - configure the subscribed template fields in WeChat
+   - deploy a timed cloud function that calls `cloud.openapi.subscribeMessage.send`
+
+6. Keep running:
    - `npm run type-check`
    - `npm run build:mp-weixin`
    - copy to `D:\dist-upload-home-ai-v1`
