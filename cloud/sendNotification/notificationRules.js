@@ -16,6 +16,20 @@ function shouldSendReminder(settings, type, today) {
   return lastSentDate !== today
 }
 
+function resolveReminderInputs(options) {
+  const snapshot = options.settings && options.settings.reminderSnapshot
+  const snapshotIsFresh = snapshot && snapshot.today === options.today
+
+  return {
+    todayTrainingCount: snapshotIsFresh && Number.isFinite(Number(snapshot.todayTrainingCount))
+      ? Number(snapshot.todayTrainingCount)
+      : Number(options.cloudTodayTrainingCount) || 0,
+    lastTrainingDate: snapshot && snapshot.lastTrainingDate
+      ? snapshot.lastTrainingDate
+      : options.cloudLastTrainingDate || ''
+  }
+}
+
 function buildReminderMessages(options) {
   const settings = options.settings || {}
   const today = options.today
@@ -56,5 +70,6 @@ function buildSubscribePayload(options) {
 module.exports = {
   buildReminderMessages,
   buildSubscribePayload,
+  resolveReminderInputs,
   shouldSendReminder
 }

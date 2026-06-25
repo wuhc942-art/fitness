@@ -9,7 +9,8 @@ import cloud = require('wx-server-sdk')
 
 const {
   buildReminderMessages,
-  buildSubscribePayload
+  buildSubscribePayload,
+  resolveReminderInputs
 } = require('./notificationRules')
 
 cloud.init({
@@ -40,6 +41,13 @@ interface ReminderSettingsDoc {
     templateId?: string
   }
   deliveryState?: Record<string, any>
+  reminderSnapshot?: {
+    today?: string
+    todayTrainingCount?: number
+    lastTrainingDate?: string
+    recordCount?: number
+    syncedAt?: string
+  }
 }
 
 function getChinaDate() {
@@ -119,11 +127,17 @@ async function sendForUser(settings: ReminderSettingsDoc, today: string) {
 
   const todayTrainingCount = await getTodayTrainingCount(settings._openid, today)
   const lastTrainingDate = await getLastTrainingDate(settings._openid)
+  const reminderInputs = resolveReminderInputs({
+    settings,
+    today,
+    cloudTodayTrainingCount: todayTrainingCount,
+    cloudLastTrainingDate: lastTrainingDate
+  })
   const messages: ReminderMessage[] = buildReminderMessages({
     settings,
     today,
-    todayTrainingCount,
-    lastTrainingDate
+    todayTrainingCount: reminderInputs.todayTrainingCount,
+    lastTrainingDate: reminderInputs.lastTrainingDate
   })
 
   let sent = 0
@@ -137,7 +151,7 @@ async function sendForUser(settings: ReminderSettingsDoc, today: string) {
         page: 'pages/index/index',
         message,
         today,
-        lastTrainingDate
+        lastTrainingDate: reminderInputs.lastTrainingDate
       }))
       await markDelivery(settings._id, message, today, 'sent')
       sent += 1

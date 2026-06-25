@@ -1,7 +1,8 @@
 const {
   buildReminderMessages,
   shouldSendReminder,
-  buildSubscribePayload
+  buildSubscribePayload,
+  resolveReminderInputs
 } = require('./notificationRules')
 
 function assert(condition, message) {
@@ -21,8 +22,23 @@ const settings = {
   deliveryState: {
     daily: { lastSentDate: '2026-06-24' },
     threeDay: { lastSentDate: '2026-06-24' }
+  },
+  reminderSnapshot: {
+    today,
+    todayTrainingCount: 1,
+    lastTrainingDate: '2026-06-23'
   }
 }
+
+const resolved = resolveReminderInputs({
+  settings,
+  today,
+  cloudTodayTrainingCount: 0,
+  cloudLastTrainingDate: '2026-06-20'
+})
+
+assert(resolved.todayTrainingCount === 1, 'resolveReminderInputs should prefer same-day local snapshot training count')
+assert(resolved.lastTrainingDate === '2026-06-23', 'resolveReminderInputs should prefer local snapshot last training date')
 
 const messages = buildReminderMessages({
   settings,

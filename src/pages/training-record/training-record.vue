@@ -211,6 +211,7 @@ import { normalizeUsingTemplatePayload } from '@/utils/training-transfer'
 import { useMiniProgramShare } from '@/utils/share'
 import { trainingPlanServiceLocal } from '@/services/training-plan.local'
 import { trainingServiceLocal } from '@/services/training.local'
+import { reminderServiceLocal } from '@/services/reminder.local'
 import { templateServiceLocal } from '@/services/template.local'
 import { BODY_PART_OPTIONS, EQUIPMENT_LABELS, EXERCISE_LIBRARY, getExerciseByName, type ExerciseBodyPart, type ExerciseEquipment } from '@/services/exercise-library.local'
 import { exerciseDbService, type ExerciseDbItem } from '@/services/exercisedb.local'
@@ -855,6 +856,9 @@ async function saveRecord() {
     if (planId.value && (!editingRecordId.value || formData.date === linkedPlanDate.value)) {
       await trainingPlanServiceLocal.markSessionCompleted(planId.value, weekNumber.value, formData.date, saved._id || '')
     }
+    reminderServiceLocal.syncSettingsToCloud().catch((error) => {
+      console.warn('同步提醒快照失败:', error)
+    })
     hasUnsavedChanges.value = false
     await loadActionLibrary()
     uni.showToast({ title: '保存成功', icon: 'success' })

@@ -1,4 +1,5 @@
 import { trainingPlanServiceLocal, type MissedPlanSession } from '@/services/training-plan.local'
+import { trainingServiceLocal } from '@/services/training.local'
 import { formatDate } from '@/utils/date'
 
 const STORAGE_KEY = 'fitness_local_reminder_settings'
@@ -25,6 +26,14 @@ export interface LocalReminderSettings {
     error?: string
   }
   updatedAt: string
+}
+
+interface ReminderSnapshot {
+  today: string
+  todayTrainingCount: number
+  lastTrainingDate: string
+  recordCount: number
+  syncedAt: string
 }
 
 const defaultSettings = (): LocalReminderSettings => ({
@@ -85,6 +94,23 @@ function writeSettings(settings: LocalReminderSettings) {
   uni.setStorageSync(STORAGE_KEY, JSON.stringify({ ...settings, updatedAt: new Date().toISOString() }))
 }
 
+async function buildReminderSnapshot(): Promise<ReminderSnapshot> {
+  const today = formatDate(new Date())
+  const records = await trainingServiceLocal.getAllRecords()
+  const sortedDates = records
+    .map((record) => record.date)
+    .filter(Boolean)
+    .sort((a, b) => b.localeCompare(a))
+
+  return {
+    today,
+    todayTrainingCount: records.filter((record) => record.date === today).length,
+    lastTrainingDate: sortedDates[0] || '',
+    recordCount: records.length,
+    syncedAt: new Date().toISOString()
+  }
+}
+
 async function syncSettingsToCloud(settings: LocalReminderSettings): Promise<LocalReminderSettings> {
   const now = new Date().toISOString()
   const next: LocalReminderSettings = {
@@ -95,6 +121,7 @@ async function syncSettingsToCloud(settings: LocalReminderSettings): Promise<Loc
 
   try {
     const cloud = ensureCloudReady()
+    const reminderSnapshot = await buildReminderSnapshot()
     const result = await cloud.callFunction({
       name: 'saveReminderSettings',
       data: {
@@ -102,6 +129,7 @@ async function syncSettingsToCloud(settings: LocalReminderSettings): Promise<Loc
           dailyReminder: next.dailyReminder,
           threeDayReminder: next.threeDayReminder,
           missedPlanReminder: next.missedPlanReminder,
+          reminderSnapshot,
           updatedAt: now
         }
       }
