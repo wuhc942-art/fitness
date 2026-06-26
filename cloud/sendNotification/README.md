@@ -14,11 +14,12 @@
 3. 部署云函数：
    - `saveReminderSettings`
    - `sendNotification`
-4. 确认云数据库存在集合：
+4. `sendNotification/config.json` 已包含定时触发器配置。修改或确认后，需要重新上传并部署 `sendNotification`，建议选择“上传并部署：云端安装依赖”。
+5. 确认云数据库存在集合：
    - `reminder_settings`
    - `training_records`
-5. 给 `sendNotification` 启用定时触发器。当前建议每天晚上训练高峰后执行一次，例如 `0 0 21 * * * *`。
-6. 在真机里进入提醒中心，点击“申请微信订阅授权”，并确认页面显示“云端已同步”。
+6. 给 `sendNotification` 启用定时触发器。当前配置为每天 21:00 执行一次：`0 0 21 * * * *`。
+7. 在真机里进入提醒中心，点击“申请微信订阅授权”，并确认页面显示“云端已同步”。
 
 ## 云函数控制台测试
 
