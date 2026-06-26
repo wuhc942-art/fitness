@@ -2,7 +2,8 @@ const {
   buildReminderMessages,
   shouldSendReminder,
   buildSubscribePayload,
-  resolveReminderInputs
+  resolveReminderInputs,
+  formatChinaDate
 } = require('./notificationRules')
 
 function assert(condition, message) {
@@ -10,6 +11,8 @@ function assert(condition, message) {
 }
 
 const today = '2026-06-25'
+
+assert(formatChinaDate(new Date('2026-06-26T08:28:00Z')) === '2026-06-26', 'formatChinaDate should return YYYY-MM-DD in China timezone')
 
 const settings = {
   dailyReminder: { enabled: true, time: '19:00' },
@@ -71,5 +74,19 @@ assert(payload.templateId === 'template_123', 'payload should include template i
 assert(payload.data.thing3.value.length <= 20, 'thing3 should fit 温馨提示 thing field limit')
 assert(payload.data.time1.value === '2026-06-20', 'time1 should use last training date')
 assert(!payload.data.thing1 && !payload.data.thing2 && !payload.data.date3, 'payload should only use fields configured by the selected template')
+
+const forced = buildReminderMessages({
+  settings: {
+    ...settings,
+    deliveryState: { daily: { lastSentDate: today }, threeDay: { lastSentDate: today } }
+  },
+  today,
+  todayTrainingCount: 1,
+  lastTrainingDate: today,
+  force: true
+})
+
+assert(forced.length === 1, 'force mode should emit a test message even when normal conditions do not match')
+assert(forced[0].type === 'daily', 'force mode should use daily test reminder')
 
 console.log('notification rules assertions passed')

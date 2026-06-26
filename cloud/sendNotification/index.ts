@@ -10,6 +10,7 @@ import cloud = require('wx-server-sdk')
 const {
   buildReminderMessages,
   buildSubscribePayload,
+  formatChinaDate,
   resolveReminderInputs
 } = require('./notificationRules')
 
@@ -48,16 +49,6 @@ interface ReminderSettingsDoc {
     recordCount?: number
     syncedAt?: string
   }
-}
-
-function getChinaDate() {
-  const formatter = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Shanghai',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  })
-  return formatter.format(new Date())
 }
 
 async function fetchSubscribedSettings(): Promise<ReminderSettingsDoc[]> {
@@ -119,7 +110,7 @@ async function markDelivery(settingsId: string, message: ReminderMessage, today:
   })
 }
 
-async function sendForUser(settings: ReminderSettingsDoc, today: string) {
+async function sendForUser(settings: ReminderSettingsDoc, today: string, options?: { force?: boolean }) {
   const templateId = settings.missedPlanReminder?.templateId
   if (!settings._openid || !templateId) {
     return { openid: settings._openid || '', sent: 0, failed: 0, skipped: 'missing_openid_or_template' }
@@ -137,7 +128,8 @@ async function sendForUser(settings: ReminderSettingsDoc, today: string) {
     settings,
     today,
     todayTrainingCount: reminderInputs.todayTrainingCount,
-    lastTrainingDate: reminderInputs.lastTrainingDate
+    lastTrainingDate: reminderInputs.lastTrainingDate,
+    force: options?.force
   })
 
   let sent = 0
@@ -164,8 +156,9 @@ async function sendForUser(settings: ReminderSettingsDoc, today: string) {
   return { openid: settings._openid, sent, failed, skipped: messages.length ? '' : 'no_message' }
 }
 
-exports.main = async () => {
-  const today = getChinaDate()
+exports.main = async (event: any = {}) => {
+  const today = event.today || formatChinaDate()
+  const force = event.force === true
 
   try {
     const settingsList = await fetchSubscribedSettings()
@@ -173,7 +166,7 @@ exports.main = async () => {
 
     for (const settings of settingsList) {
       try {
-        results.push(await sendForUser(settings, today))
+        results.push(await sendForUser(settings, today, { force }))
       } catch (error: any) {
         results.push({
           openid: settings._openid || '',
@@ -191,6 +184,7 @@ exports.main = async () => {
     return {
       success: true,
       today,
+      force,
       checkedUsers: settingsList.length,
       sent,
       failed,

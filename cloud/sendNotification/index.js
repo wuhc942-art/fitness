@@ -6,6 +6,7 @@ const cloud = require('wx-server-sdk')
 const {
   buildReminderMessages,
   buildSubscribePayload,
+  formatChinaDate,
   resolveReminderInputs
 } = require('./notificationRules')
 
@@ -14,16 +15,6 @@ cloud.init({
 })
 
 const db = cloud.database()
-
-function getChinaDate() {
-  const formatter = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Shanghai',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  })
-  return formatter.format(new Date())
-}
 
 async function fetchSubscribedSettings() {
   const result = await db.collection('reminder_settings')
@@ -84,7 +75,7 @@ async function markDelivery(settingsId, message, today, status, error) {
   })
 }
 
-async function sendForUser(settings, today) {
+async function sendForUser(settings, today, options) {
   const templateId = settings.missedPlanReminder && settings.missedPlanReminder.templateId
   if (!settings._openid || !templateId) {
     return { openid: settings._openid || '', sent: 0, failed: 0, skipped: 'missing_openid_or_template' }
@@ -102,7 +93,8 @@ async function sendForUser(settings, today) {
     settings,
     today,
     todayTrainingCount: reminderInputs.todayTrainingCount,
-    lastTrainingDate: reminderInputs.lastTrainingDate
+    lastTrainingDate: reminderInputs.lastTrainingDate,
+    force: options && options.force
   })
 
   let sent = 0
@@ -129,8 +121,9 @@ async function sendForUser(settings, today) {
   return { openid: settings._openid, sent, failed, skipped: messages.length ? '' : 'no_message' }
 }
 
-exports.main = async () => {
-  const today = getChinaDate()
+exports.main = async (event = {}) => {
+  const today = event.today || formatChinaDate()
+  const force = event.force === true
 
   try {
     const settingsList = await fetchSubscribedSettings()
@@ -138,7 +131,7 @@ exports.main = async () => {
 
     for (const settings of settingsList) {
       try {
-        results.push(await sendForUser(settings, today))
+        results.push(await sendForUser(settings, today, { force }))
       } catch (err) {
         results.push({
           openid: settings._openid || '',
@@ -156,6 +149,7 @@ exports.main = async () => {
     return {
       success: true,
       today,
+      force,
       checkedUsers: settingsList.length,
       sent,
       failed,

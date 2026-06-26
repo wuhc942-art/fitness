@@ -4,6 +4,11 @@ function clampText(value, maxLength) {
   return text.slice(0, Math.max(0, maxLength - 1)) + '…'
 }
 
+function formatChinaDate(date = new Date()) {
+  const chinaTime = new Date(date.getTime() + 8 * 60 * 60 * 1000)
+  return chinaTime.toISOString().slice(0, 10)
+}
+
 function daysBetween(fromDate, toDate) {
   if (!fromDate || !toDate) return 0
   const from = new Date(`${fromDate}T00:00:00+08:00`)
@@ -33,6 +38,14 @@ function resolveReminderInputs(options) {
 function buildReminderMessages(options) {
   const settings = options.settings || {}
   const today = options.today
+
+  if (options.force) {
+    return [{
+      type: 'daily',
+      title: '测试提醒',
+      content: '这是一条订阅提醒测试'
+    }]
+  }
 
   const diffDays = daysBetween(options.lastTrainingDate, today)
   if (settings.threeDayReminder && settings.threeDayReminder.enabled && diffDays >= 3 && shouldSendReminder(settings, 'threeDay', today)) {
@@ -70,6 +83,7 @@ function buildSubscribePayload(options) {
 module.exports = {
   buildReminderMessages,
   buildSubscribePayload,
+  formatChinaDate,
   resolveReminderInputs,
   shouldSendReminder
 }
