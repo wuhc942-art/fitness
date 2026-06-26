@@ -12,15 +12,27 @@ cloud.init({
 
 const db = cloud.database()
 
+function getOpenId(context: any) {
+  const wxContext = cloud.getWXContext ? cloud.getWXContext() : {}
+  return wxContext.OPENID || context.OPENID || ''
+}
+
 exports.main = async (event: any, context: any) => {
   try {
-    const { OPENID } = context
+    const OPENID = getOpenId(context || {})
     const { settings, id } = event
     
     if (!settings) {
       return {
         success: false,
         error: '缺少设置数据'
+      }
+    }
+
+    if (!OPENID) {
+      return {
+        success: false,
+        error: '获取 openid 失败，请用真机或已登录的小程序环境重试'
       }
     }
     
