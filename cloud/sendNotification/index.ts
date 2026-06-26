@@ -19,6 +19,7 @@ cloud.init({
 })
 
 const db = cloud.database()
+const FUNCTION_VERSION = 'reminder-force-debug-20260626'
 
 interface ReminderMessage {
   type: 'daily' | 'threeDay'
@@ -134,6 +135,7 @@ async function sendForUser(settings: ReminderSettingsDoc, today: string, options
 
   let sent = 0
   let failed = 0
+  const errors: Array<{ type: string; message: string }> = []
 
   for (const message of messages) {
     try {
@@ -149,11 +151,16 @@ async function sendForUser(settings: ReminderSettingsDoc, today: string, options
       sent += 1
     } catch (error: any) {
       failed += 1
-      await markDelivery(settings._id, message, today, 'failed', error?.errMsg || error?.message || String(error))
+      const errorMessage = error?.errMsg || error?.message || String(error)
+      errors.push({
+        type: message.type,
+        message: errorMessage
+      })
+      await markDelivery(settings._id, message, today, 'failed', errorMessage)
     }
   }
 
-  return { openid: settings._openid, sent, failed, skipped: messages.length ? '' : 'no_message' }
+  return { openid: settings._openid, sent, failed, skipped: messages.length ? '' : 'no_message', errors }
 }
 
 exports.main = async (event: any = {}) => {
@@ -183,6 +190,7 @@ exports.main = async (event: any = {}) => {
 
     return {
       success: true,
+      version: FUNCTION_VERSION,
       today,
       force,
       checkedUsers: settingsList.length,
@@ -194,6 +202,7 @@ exports.main = async (event: any = {}) => {
     console.error('Send notification error:', error)
     return {
       success: false,
+      version: FUNCTION_VERSION,
       today,
       error: error?.message || String(error)
     }

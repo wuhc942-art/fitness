@@ -15,6 +15,7 @@ cloud.init({
 })
 
 const db = cloud.database()
+const FUNCTION_VERSION = 'reminder-force-debug-20260626'
 
 async function fetchSubscribedSettings() {
   const result = await db.collection('reminder_settings')
@@ -99,6 +100,7 @@ async function sendForUser(settings, today, options) {
 
   let sent = 0
   let failed = 0
+  const errors = []
 
   for (const message of messages) {
     try {
@@ -114,11 +116,16 @@ async function sendForUser(settings, today, options) {
       sent += 1
     } catch (err) {
       failed += 1
-      await markDelivery(settings._id, message, today, 'failed', err && (err.errMsg || err.message) || String(err))
+      const errorMessage = err && (err.errMsg || err.message) || String(err)
+      errors.push({
+        type: message.type,
+        message: errorMessage
+      })
+      await markDelivery(settings._id, message, today, 'failed', errorMessage)
     }
   }
 
-  return { openid: settings._openid, sent, failed, skipped: messages.length ? '' : 'no_message' }
+  return { openid: settings._openid, sent, failed, skipped: messages.length ? '' : 'no_message', errors }
 }
 
 exports.main = async (event = {}) => {
@@ -148,6 +155,7 @@ exports.main = async (event = {}) => {
 
     return {
       success: true,
+      version: FUNCTION_VERSION,
       today,
       force,
       checkedUsers: settingsList.length,
@@ -159,6 +167,7 @@ exports.main = async (event = {}) => {
     console.error('Send notification error:', err)
     return {
       success: false,
+      version: FUNCTION_VERSION,
       today,
       error: err && err.message || String(err)
     }
